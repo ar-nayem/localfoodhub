@@ -88,6 +88,8 @@ export const upsertProductSchema = z.object({
   ingredients: z.array(z.string()).default([]),
   allergens: z.array(z.string()).default([]),
   dietaryTags: z.array(z.string()).default([]),
+  featured: z.boolean().optional(),
+  discoveryEligible: z.boolean().optional(),
 });
 
 export const upsertCategorySchema = z.object({

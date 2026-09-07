@@ -47,6 +47,32 @@ Customers don't need an account — guest checkout works for all three order mod
    it resolves to an inline staff-verification panel instead of the customer view, with a
    "Mark Collected" action.
 
+## Walking Explore (the "what should I eat?" quiz)
+
+1. From the homepage, tap the **Explore** banner (or go to `/discover`).
+2. Answer budget / people / mood / order-type — each tap advances automatically, no
+   "Next" button. Skips the location step entirely when there's only one seeded location.
+3. **Choose This** goes to that product's detail page (options/add-ons still apply,
+   normal add-to-cart flow from there); **Pass** gets another pick that excludes
+   everything already shown this session.
+4. Vendor-side: `/vendor/storefront` → toggle a shop's *Include my shop in Explore*, or a
+   product's *Discoverable* checkbox, to opt in/out. `/vendor` overview shows a simple
+   shown/selected/ordered count once your food has been surfaced at least once.
+
+## Walking the Shop Builder ("Customize My Shop")
+
+1. Sign in as any `owner-*@localfoodhub.demo` (owner role only — staff can't reach this
+   page) → `/vendor/storefront`.
+2. Upload a logo/banner, pick a theme preset (or a custom accent color — colors too pale
+   for readable button text are rejected on save), toggle which optional sections show
+   above your menu, mark products **Featured**.
+3. **Save Draft** persists your changes without customers seeing them; **Publish
+   Changes** copies the draft onto the live shop and logs a `ShopRevision` snapshot.
+   **View My Shop** opens the real public page in a new tab.
+4. `/vendor/discounts` manages shop-wide promo codes (percent/fixed, min order, usage
+   limit, date range) — per-item discounts are just a product's `discountPrice` field in
+   `/vendor/menu`, already shown with a strikethrough on the customer side.
+
 ## Scope
 
 **Fully built**: customer discovery/search/shop pages/product detail, single-shop cart,
@@ -55,21 +81,31 @@ provider (swap-ready, see `lib/payment/`), order confirmation + live-polling tra
 the full QR system (secure-token generation, `/q/[token]` resolver covering every QR
 type from the spec, an in-app camera scanner via `jsqr`, staff order-QR verification),
 vendor dashboard (Kanban order board, a large-card Kitchen Display view, menu/category
-management, table + QR management with print/download, light staff invites), and a
-lighter admin pass (shop approval queue, platform QR overview, location management,
-overview stats).
+management, table + QR management with print/download, light staff invites), a lighter
+admin pass (shop approval queue, platform QR overview, location management, overview
+stats), a vendor **Shop Builder** (logo/banner upload, theme presets with a
+contrast-safety check, optional storefront sections, featured products, draft/publish
+with revision history) and shop-wide discount management, and **Explore** — a
+budget/people/mood/order-type quiz feeding a rating-weighted-but-still-random
+recommendation engine with pass/choose, session-scoped no-repeat, and lightweight
+shown/clicked/ordered event logging.
 
 **Schema-complete, UI-deferred** (so nothing here blocks the feature later — see the
-model comments in `prisma/schema.prisma`): reviews, promotions (the `Promotion` model
-and promo-code redemption *do* work end-to-end; there's just no vendor UI to *create*
-one beyond the seed data), delivery-courier tracking, notifications (persisted +
-console-logged via `lib/notifications/`, no real push/SMS/email provider wired),
-cross-device cart persistence (cart is client-side/localStorage for this pass), audit
-log (written on every admin shop-status change, no viewer UI yet).
+model comments in `prisma/schema.prisma`): reviews, delivery-courier tracking,
+notifications (persisted + console-logged via `lib/notifications/`, no real push/SMS/
+email provider wired), cross-device cart persistence (cart is client-side/localStorage
+for this pass), audit log (written on every admin shop-status change, no viewer UI yet),
+image moderation (`Media.status` defaults `APPROVED`, no admin review queue).
 
-**Not attempted this pass**: full analytics dashboards/charts, multi-branch shops,
+**Not attempted this pass**: full analytics dashboards/charts (Explore and QR both log
+real events; only simple counts are surfaced, not funnels/charts), multi-branch shops,
 inventory depth beyond available/sold-out, PWA installability, SEO polish beyond page
-titles.
+titles, real geolocation/distance-based filtering in Explore (no lat/lng on shops —
+"location" there is the existing food-court `Location` model, not GPS), image
+cropping/multi-size optimization (uploads are stored as-is on local disk, see
+`lib/vendor/media.ts`), drag-and-drop reordering anywhere (simple toggles/buttons
+instead), and the 11-step onboarding wizard (replaced with a completion-percent
+checklist on the vendor Overview page, spec's own Section 117 alternative).
 
 ## Architecture
 
@@ -101,8 +137,9 @@ titles.
 
 ```
 app/
-  (customer)/       home, explore, shop/product pages, cart, checkout, orders, scan, auth
-  vendor/           owner/staff dashboard (role-guarded via middleware.ts)
+  (customer)/       home, explore, discover (quiz), shop/product pages, cart,
+                     checkout, orders, scan, auth
+  vendor/           owner/staff dashboard incl. storefront/discounts (role-guarded)
   admin/            platform admin (role-guarded via middleware.ts)
   api/               every route above, grouped by resource
   q/[token]/         the QR resolver
@@ -116,7 +153,10 @@ lib/
   notifications/    NotificationService interface + console/DB implementation
   cart/             client-side cart store (Zustand + localStorage)
   orders/           createOrder — the one place an order gets created
+  storefront/       theme presets + contrast-safety check for the shop builder
+  vendor/           media upload (local disk) + shop-access authz helpers
   validation/        zod schemas
 prisma/
   schema.prisma seed.ts
+public/uploads/     vendor-uploaded logos/banners (gitignored, runtime data)
 ```

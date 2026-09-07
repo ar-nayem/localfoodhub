@@ -1,10 +1,13 @@
 import Link from "next/link";
 import { Star, MapPin, Clock, QrCode } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 export function ShopHeader({
   shop,
   dineInTable,
   openingHours,
+  bannerText,
+  bannerCta,
 }: {
   shop: {
     slug: string;
@@ -22,6 +25,8 @@ export function ShopHeader({
   };
   dineInTable: { id: string; label: string; area: string } | null;
   openingHours: { day: string; open: string; close: string }[];
+  bannerText?: string | null;
+  bannerCta?: string | null;
 }) {
   return (
     <div>
@@ -32,9 +37,25 @@ export function ShopHeader({
         ) : (
           <div className="flex h-full w-full items-center justify-center text-5xl">🍽️</div>
         )}
+        {bannerText && (
+          <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/70 to-transparent p-4 sm:rounded-b-2xl">
+            <p className="text-sm font-bold text-white sm:text-base">{bannerText}</p>
+            {bannerCta && (
+              <span className="mt-1 inline-block rounded-full bg-white/20 px-2.5 py-0.5 text-xs font-medium text-white">
+                {bannerCta}
+              </span>
+            )}
+          </div>
+        )}
+        {shop.logoUrl && (
+          <div className="absolute -bottom-6 left-4 h-14 w-14 overflow-hidden rounded-2xl border-4 border-background bg-surface shadow sm:left-6">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={shop.logoUrl} alt={`${shop.name} logo`} className="h-full w-full object-cover" />
+          </div>
+        )}
       </div>
 
-      <div className="px-4 pt-4 sm:px-6">
+      <div className={cn("px-4 sm:px-6", shop.logoUrl ? "pt-9" : "pt-4")}>
         {dineInTable && (
           <div className="mb-3 flex items-center gap-2 rounded-xl bg-primary/10 px-3.5 py-2.5 text-sm font-medium text-primary">
             <QrCode size={16} />

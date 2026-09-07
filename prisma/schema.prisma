@@ -47,6 +47,9 @@ model Location {
   name        String
   slug        String  @unique
   description String?
+  // When true, this location's QR/link opens "Surprise Me" discovery scoped to this
+  // location instead of the plain shop-browsing list (spec Section 134).
+  promoteDiscovery Boolean @default(false)
 
   shops   Shop[]
   qrCodes QRCode[]
@@ -77,6 +80,18 @@ model Shop {
   rating           Float   @default(0)
   ratingCount      Int     @default(0)
 
+  // ── Storefront customization (spec Section 96-115) — published, live fields.
+  // themePreset: classic | fresh | modern | warm | minimal | bold (lib/storefront/theme.ts)
+  bannerText       String?
+  bannerCta        String?
+  themePreset      String  @default("classic")
+  accentColor      String? // optional custom hex, contrast-checked before accepting (lib/storefront/theme.ts)
+  sectionsConfig   String  @default("[]") // JSON [{key, visible, order}] — optional storefront sections above the menu
+  discoveryEnabled Boolean @default(true)
+  // Pending edits to the fields above, applied to the live columns only on Publish
+  // (spec Section 114/145) — customers never see draftConfig, only the published columns.
+  draftConfig      String?
+
   locationId String?
   location   Location? @relation(fields: [locationId], references: [id])
 
@@ -89,9 +104,35 @@ model Shop {
   promotions Promotion[]
   reviews    Review[]
   favorites  Favorite[]
+  media      Media[]
+  revisions  ShopRevision[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+// Snapshot written each time a vendor publishes storefront changes — history only, no
+// rollback UI in this pass (spec Section 115 says "future rollback ready", not required now).
+model ShopRevision {
+  id            String   @id @default(cuid())
+  shopId        String
+  shop          Shop     @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  config        String // JSON snapshot of the published storefront fields at publish time
+  publishedById String?
+  createdAt     DateTime @default(now())
+}
+
+// Media.type: SHOP_LOGO | BANNER | FOOD | GALLERY
+// Media.status: PENDING | APPROVED | REJECTED — moderation-ready (spec Section 141); no
+// admin moderation UI in this pass, everything defaults APPROVED and is usable immediately.
+model Media {
+  id        String   @id @default(cuid())
+  shopId    String
+  shop      Shop     @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  url       String
+  type      String
+  status    String   @default("APPROVED")
+  createdAt DateTime @default(now())
 }
 
 // ShopStaff.role: SHOP_OWNER | SHOP_STAFF | KITCHEN_STAFF
@@ -138,12 +179,15 @@ model Product {
   allergens       String  @default("[]") // JSON string[]
   dietaryTags     String  @default("[]") // JSON string[] e.g. ["vegetarian","halal","spicy"]
   sortOrder       Int     @default(0)
+  featured        Boolean @default(false) // vendor-picked: Featured / Best Sellers / Today's Special
+  discoveryEligible Boolean @default(true) // spec Section 132/135 — vendor opt-out per product
 
   options    ProductOption[]
   addons     ProductAddon[]
   orderItems OrderItem[]
   favorites  Favorite[]
   qrCodes    QRCode[]
+  discoveryEvents DiscoveryEvent[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -431,20 +475,35 @@ model Review {
 
 // Promotion.type: PERCENT | FIXED | BOGO | FREE_ITEM
 model Promotion {
-  id       String  @id @default(cuid())
-  shopId   String
-  shop     Shop    @relation(fields: [shopId], references: [id], onDelete: Cascade)
-  code     String? @unique
-  title    String
-  type     String
-  value    Float
-  active   Boolean @default(true)
-  startsAt DateTime?
-  endsAt   DateTime?
+  id         String  @id @default(cuid())
+  shopId     String
+  shop       Shop    @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  code       String? @unique
+  title      String
+  type       String
+  value      Float
+  active     Boolean @default(true)
+  startsAt   DateTime?
+  endsAt     DateTime?
+  minOrder   Float   @default(0)
+  usageLimit Int? // null = unlimited
+  usedCount  Int     @default(0)
 
   orders Order[]
   qrCode QRCode?
 
+  createdAt DateTime @default(now())
+}
+
+// One row per discovery impression/interaction — spec Section 136, kept intentionally
+// lightweight (no dashboard, just simple counts surfaced on the vendor Overview page).
+// action: SHOWN | CLICKED | ORDERED
+model DiscoveryEvent {
+  id        String   @id @default(cuid())
+  productId String
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  shopId    String
+  action    String
   createdAt DateTime @default(now())
 }
 

@@ -27,12 +27,19 @@ interface CartState {
   entryQrToken: string | null;
   promoCode: string | null;
   promoDiscount: number;
+  /** Set when the customer added this item via Explore's "Choose This" — checkout fires
+   * a discovery ORDERED event if the completed order actually contains it (spec Section
+   * 135/136). Purely additive analytics; never affects pricing or order creation. */
+  discoveryPick: { productId: string; shopId: string } | null;
   items: CartLineItem[];
   /** Set when addItem is called for a different shop than what's already in the cart —
    * spec Section 12: never silently mix orders from different vendors. */
   conflict: { shopId: string; shopName: string; shopSlug: string; item: CartLineItem } | null;
 
-  addItem: (shopId: string, shopName: string, shopSlug: string, item: CartLineItem) => void;
+  /** Returns false (and sets `conflict` instead of adding) when the item is from a
+   * different shop than what's already in the cart — callers must check this before
+   * treating the add as successful (e.g. before showing a toast or navigating away). */
+  addItem: (shopId: string, shopName: string, shopSlug: string, item: CartLineItem) => boolean;
   setQuantity: (key: string, quantity: number) => void;
   removeItem: (key: string) => void;
   clear: () => void;
@@ -41,6 +48,7 @@ interface CartState {
   subtotal: () => number;
   itemCount: () => number;
   setPromo: (code: string | null, discount: number) => void;
+  setDiscoveryPick: (pick: { productId: string; shopId: string } | null) => void;
   setOrderContext: (ctx: {
     orderMode?: OrderMode | null;
     tableQrToken?: string | null;
@@ -61,17 +69,19 @@ export const useCartStore = create<CartState>()(
       entryQrToken: null,
       promoCode: null,
       promoDiscount: 0,
+      discoveryPick: null,
       items: [],
       conflict: null,
 
       setOrderContext: (ctx) => set((s) => ({ ...s, ...ctx })),
       setPromo: (code, discount) => set({ promoCode: code, promoDiscount: discount }),
+      setDiscoveryPick: (pick) => set({ discoveryPick: pick }),
 
       addItem: (shopId, shopName, shopSlug, item) => {
         const state = get();
         if (state.shopId && state.shopId !== shopId) {
           set({ conflict: { shopId, shopName, shopSlug, item } });
-          return;
+          return false;
         }
         set((s) => {
           const existing = s.items.find((i) => i.key === item.key);
@@ -82,6 +92,7 @@ export const useCartStore = create<CartState>()(
             : [...s.items, item];
           return { shopId, shopName, shopSlug, items };
         });
+        return true;
       },
 
       setQuantity: (key, quantity) =>
@@ -105,6 +116,7 @@ export const useCartStore = create<CartState>()(
           entryQrToken: null,
           promoCode: null,
           promoDiscount: 0,
+          discoveryPick: null,
           items: [],
         }),
 

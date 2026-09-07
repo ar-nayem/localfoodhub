@@ -66,7 +66,15 @@ export async function resolveQrToken(
         to: `/s/${qr.shop?.slug}?promo=${qr.promotion?.code ?? ""}`,
       };
     case "LOCATION":
-      return { ok: true, kind: "redirect", to: `/explore?location=${qr.locationId}` };
+      // spec Section 134/144: a location QR marked "promote discovery" opens Explore
+      // pre-scoped to this location instead of the plain browse list.
+      return {
+        ok: true,
+        kind: "redirect",
+        to: qr.location?.promoteDiscovery
+          ? `/discover?location=${qr.locationId}`
+          : `/explore?location=${qr.locationId}`,
+      };
     case "REGISTRATION":
       return { ok: true, kind: "redirect", to: `/apply?ref=${token}` };
     case "ORDER":

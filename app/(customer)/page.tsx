@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Truck, ShoppingBag, UtensilsCrossed, QrCode } from "lucide-react";
+import { Truck, ShoppingBag, UtensilsCrossed, QrCode, Sparkles } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { brand } from "@/lib/brand";
 import { SearchBar } from "@/components/customer/SearchBar";
@@ -31,6 +31,26 @@ export default async function HomePage() {
         <div className="mt-4">
           <SearchBar />
         </div>
+      </section>
+
+      <section className="mb-8">
+        <Link
+          href="/discover"
+          className="flex items-center justify-between gap-4 overflow-hidden rounded-2xl bg-secondary px-6 py-5 text-secondary-foreground shadow-sm transition-transform active:scale-[0.99] sm:px-8 sm:py-6"
+        >
+          <div>
+            <p className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-secondary-foreground/70">
+              <Sparkles size={14} /> Explore
+            </p>
+            <h2 className="mt-1 text-xl font-bold sm:text-2xl">What should you eat today?</h2>
+            <p className="mt-1 text-sm text-secondary-foreground/80">
+              Can&apos;t decide? Answer a few quick questions and let us find something.
+            </p>
+          </div>
+          <span className="hidden shrink-0 rounded-xl bg-white/15 px-4 py-2.5 text-sm font-semibold sm:block">
+            Explore Now →
+          </span>
+        </Link>
       </section>
 
       <section className="mb-8 grid grid-cols-2 gap-3 sm:grid-cols-4">

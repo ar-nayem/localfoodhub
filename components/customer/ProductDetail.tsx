@@ -78,7 +78,7 @@ export function ProductDetail({
     }));
     const selAddons = selectedAddons.map((a) => ({ name: a.name, price: a.price }));
 
-    addItem(product.shopId, product.shop.name, product.shop.slug, {
+    const added = addItem(product.shopId, product.shop.name, product.shop.slug, {
       key: cartLineKey(product.id, selOptions, selAddons),
       productId: product.id,
       name: product.name,
@@ -89,8 +89,13 @@ export function ProductDetail({
       selectedAddons: selAddons,
       notes: notes || undefined,
     });
-    toast(`Added ${quantity} × ${product.name}`, "success");
-    router.back();
+    // On a conflict, addItem sets the store's `conflict` state instead of adding — the
+    // globally-mounted CartConflictDialog (app/(customer)/layout.tsx) takes over from
+    // here. Only treat this as success — toast + navigate away — when it actually added.
+    if (added) {
+      toast(`Added ${quantity} × ${product.name}`, "success");
+      router.back();
+    }
   }
 
   return (

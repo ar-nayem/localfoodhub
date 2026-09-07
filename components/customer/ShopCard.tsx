@@ -49,7 +49,15 @@ export function ShopCard({ shop }: { shop: ShopCardData }) {
       </div>
       <div className="p-3.5">
         <div className="flex items-start justify-between gap-2">
-          <p className="font-semibold text-foreground">{shop.name}</p>
+          <div className="flex min-w-0 items-center gap-2">
+            {shop.logoUrl && (
+              <span className="h-7 w-7 shrink-0 overflow-hidden rounded-full border border-border bg-surface">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={shop.logoUrl} alt="" className="h-full w-full object-cover" />
+              </span>
+            )}
+            <p className="truncate font-semibold text-foreground">{shop.name}</p>
+          </div>
           <span className="flex shrink-0 items-center gap-0.5 text-sm font-medium">
             <Star size={14} className="fill-warning text-warning" />
             {shop.rating > 0 ? shop.rating.toFixed(1) : "New"}

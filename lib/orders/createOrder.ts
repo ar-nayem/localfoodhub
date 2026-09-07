@@ -119,7 +119,14 @@ export async function createOrder(
     const promo = await prisma.promotion.findFirst({
       where: { shopId: shop.id, code: input.promoCode, active: true },
     });
-    if (promo) {
+    const now = new Date();
+    const promoValid =
+      promo &&
+      (!promo.startsAt || now >= promo.startsAt) &&
+      (!promo.endsAt || now <= promo.endsAt) &&
+      (promo.usageLimit === null || promo.usedCount < promo.usageLimit) &&
+      subtotal >= promo.minOrder;
+    if (promoValid) {
       discount =
         promo.type === "PERCENT"
           ? Math.round((subtotal * promo.value) / 100)
@@ -186,6 +193,9 @@ export async function createOrder(
 
     if (tableId) {
       await tx.table.update({ where: { id: tableId }, data: { status: "ORDERING" } });
+    }
+    if (promotionId) {
+      await tx.promotion.update({ where: { id: promotionId }, data: { usedCount: { increment: 1 } } });
     }
 
     return created;

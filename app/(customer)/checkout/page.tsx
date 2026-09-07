@@ -101,6 +101,14 @@ export default function CheckoutPage() {
         throw new Error("Payment failed. Your order has not been confirmed.");
       }
 
+      if (cart.discoveryPick && cart.items.some((i) => i.productId === cart.discoveryPick!.productId)) {
+        fetch("/api/discover/event", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ ...cart.discoveryPick, action: "ORDERED" }),
+        }).catch(() => undefined);
+      }
+
       setOrderPlaced(true);
       cart.clear();
       toast("Order confirmed!", "success");

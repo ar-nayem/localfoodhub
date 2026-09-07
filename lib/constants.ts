@@ -127,3 +127,28 @@ export type PromotionType = (typeof PROMOTION_TYPES)[number];
 
 export const CURRENCY = "BDT";
 export const CURRENCY_SYMBOL = "৳";
+
+// Discovery mood filter — matched against Product.dietaryTags plus a couple of
+// category-name heuristics (see app/api/discover/route.ts). "Any" = no filter.
+export const MOOD_TAGS = [
+  "spicy",
+  "sweet",
+  "healthy",
+  "vegetarian",
+  "halal",
+  "dessert",
+  "drinks",
+] as const;
+
+export interface PriceBucket {
+  key: string;
+  label: string;
+  min?: number;
+  max?: number;
+}
+
+export const PRICE_BUCKETS: PriceBucket[] = [
+  { key: "budget", label: "Budget", max: 150 },
+  { key: "mid", label: "Mid-range", min: 150, max: 350 },
+  { key: "premium", label: "Premium", min: 350 },
+];

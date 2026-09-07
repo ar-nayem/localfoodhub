@@ -11,6 +11,8 @@ import {
   Users,
   Settings,
   LogOut,
+  Palette,
+  Percent,
 } from "lucide-react";
 import { Logo } from "@/components/brand/Logo";
 import { cn } from "@/lib/utils";
@@ -20,15 +22,18 @@ const NAV = [
   { href: "/vendor/orders", label: "Orders", icon: ClipboardList },
   { href: "/vendor/kitchen", label: "Kitchen Display", icon: UtensilsCrossed },
   { href: "/vendor/menu", label: "Menu", icon: Grid3x3 },
+  { href: "/vendor/storefront", label: "Customize Shop", icon: Palette, ownerOnly: true },
+  { href: "/vendor/discounts", label: "Discounts", icon: Percent, ownerOnly: true },
   { href: "/vendor/tables", label: "Tables", icon: Grid3x3 },
   { href: "/vendor/qr", label: "QR Center", icon: QrCode },
-  { href: "/vendor/staff", label: "Staff", icon: Users },
+  { href: "/vendor/staff", label: "Staff", icon: Users, ownerOnly: true },
   { href: "/vendor/settings", label: "Settings", icon: Settings },
 ];
 
-export function VendorChrome({ children }: { children: React.ReactNode }) {
+export function VendorChrome({ children, role }: { children: React.ReactNode; role: string }) {
   const pathname = usePathname();
   const router = useRouter();
+  const nav = NAV.filter((item) => !item.ownerOnly || role === "SHOP_OWNER");
 
   async function logout() {
     await fetch("/api/auth/logout", { method: "POST" });
@@ -44,7 +49,7 @@ export function VendorChrome({ children }: { children: React.ReactNode }) {
           <span className="mt-1 block text-xs text-muted-foreground">Vendor dashboard</span>
         </div>
         <nav className="flex-1 space-y-1 p-3">
-          {NAV.map(({ href, label, icon: Icon }) => {
+          {nav.map(({ href, label, icon: Icon }) => {
             const active = href === "/vendor" ? pathname === "/vendor" : pathname.startsWith(href);
             return (
               <Link
@@ -78,7 +83,7 @@ export function VendorChrome({ children }: { children: React.ReactNode }) {
           </button>
         </header>
         <nav className="flex gap-1 overflow-x-auto border-b border-border bg-surface px-2 sm:hidden">
-          {NAV.map(({ href, label }) => (
+          {nav.map(({ href, label }) => (
             <Link
               key={href}
               href={href}

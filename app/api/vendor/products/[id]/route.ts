@@ -28,6 +28,8 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
       ...(d.ingredients !== undefined ? { ingredients: JSON.stringify(d.ingredients) } : {}),
       ...(d.allergens !== undefined ? { allergens: JSON.stringify(d.allergens) } : {}),
       ...(d.dietaryTags !== undefined ? { dietaryTags: JSON.stringify(d.dietaryTags) } : {}),
+      ...(d.featured !== undefined ? { featured: d.featured } : {}),
+      ...(d.discoveryEligible !== undefined ? { discoveryEligible: d.discoveryEligible } : {}),
     },
   });
   return NextResponse.json(updated);

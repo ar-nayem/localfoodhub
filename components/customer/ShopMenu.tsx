@@ -36,8 +36,7 @@ export function ShopMenu({
 }) {
   const router = useRouter();
   const [activeCategory, setActiveCategory] = useState(categories[0]?.id);
-  const { addItem, conflict, resolveConflictByClearing, dismissConflict, setOrderContext, orderMode } =
-    useCartStore();
+  const { addItem, setOrderContext, orderMode } = useCartStore();
 
   useEffect(() => {
     if (dineInTable && dineInQrToken) {
@@ -61,7 +60,7 @@ export function ShopMenu({
       router.push(`/s/${shopSlug}/product/${product.id}`);
       return;
     }
-    addItem(shopId, shopName, shopSlug, {
+    const added = addItem(shopId, shopName, shopSlug, {
       key: cartLineKey(product.id, [], []),
       productId: product.id,
       name: product.name,
@@ -71,7 +70,7 @@ export function ShopMenu({
       selectedOptions: [],
       selectedAddons: [],
     });
-    toast(`Added ${product.name}`, "success");
+    if (added) toast(`Added ${product.name}`, "success");
   }
 
   const allProducts = useMemo(() => categories.flatMap((c) => c.products), [categories]);
@@ -145,34 +144,6 @@ export function ShopMenu({
               )
           )}
         </>
-      )}
-
-      {conflict && (
-        <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/40 px-4">
-          <div className="w-full max-w-sm rounded-2xl bg-surface p-5">
-            <h3 className="font-semibold">You can only order from one shop per order</h3>
-            <p className="mt-1 text-sm text-muted-foreground">
-              Your cart has items from another shop. Clear it to add from {shopName}?
-            </p>
-            <div className="mt-4 flex flex-col gap-2">
-              <button
-                onClick={() => {
-                  resolveConflictByClearing();
-                  toast(`Switched to ${shopName}`, "info");
-                }}
-                className="w-full rounded-xl bg-primary py-2.5 text-sm font-semibold text-primary-foreground"
-              >
-                Clear cart & add
-              </button>
-              <button
-                onClick={dismissConflict}
-                className="w-full rounded-xl border border-border py-2.5 text-sm font-medium"
-              >
-                Cancel
-              </button>
-            </div>
-          </div>
-        </div>
       )}
     </div>
   );

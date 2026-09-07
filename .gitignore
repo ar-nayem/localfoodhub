@@ -10,3 +10,5 @@ npm-debug.log*
 /prisma/dev.db-journal
 /dev.db
 /dev.db-journal
+/public/uploads/*
+!/public/uploads/.gitkeep
