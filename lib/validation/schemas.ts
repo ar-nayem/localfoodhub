@@ -82,7 +82,12 @@ export const upsertProductSchema = z.object({
   description: z.string().max(1000).default(""),
   price: z.number().min(0),
   discountPrice: z.number().min(0).nullable().optional(),
-  imageUrl: z.string().url().optional().or(z.literal("")),
+  // Not z.string().url() — every real value here comes from the local-upload endpoint as
+  // an app-relative path (/uploads/<shopId>/<file>), which .url() rejects outright since
+  // it requires a scheme+host. That made every product save fail right after a successful
+  // image upload. The "advanced: use an image URL" field still accepts absolute URLs fine;
+  // this just stops rejecting the normal case.
+  imageUrl: z.string().optional().or(z.literal("")),
   status: z.enum(["AVAILABLE", "SOLD_OUT", "HIDDEN"]).default("AVAILABLE"),
   prepTimeMinutes: z.number().int().min(0).default(10),
   ingredients: z.array(z.string()).default([]),
