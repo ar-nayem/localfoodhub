@@ -11,7 +11,13 @@ import { Input } from "@/components/ui/Input";
  * external scanning service. Any of our own QR codes just encode `/q/<token>`, so once
  * jsQR reads the frame we simply navigate there and the server route
  * (app/q/[token]/route.ts) does all the real resolution/validation work. */
-export function QrScanner() {
+export function QrScanner({
+  heading = "Scan QR",
+  subtitle = "Point your camera at a shop, table, or menu QR code.",
+}: {
+  heading?: string;
+  subtitle?: string;
+}) {
   const router = useRouter();
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -84,10 +90,8 @@ export function QrScanner() {
 
   return (
     <div className="mx-auto max-w-sm px-4 py-6">
-      <h1 className="mb-1 text-center text-xl font-bold">Scan QR</h1>
-      <p className="mb-5 text-center text-sm text-muted-foreground">
-        Point your camera at a shop, table, or menu QR code.
-      </p>
+      <h1 className="mb-1 text-center text-xl font-bold">{heading}</h1>
+      <p className="mb-5 text-center text-sm text-muted-foreground">{subtitle}</p>
 
       <div className="relative aspect-square w-full overflow-hidden rounded-2xl bg-black">
         <video ref={videoRef} className="h-full w-full object-cover" muted playsInline />
