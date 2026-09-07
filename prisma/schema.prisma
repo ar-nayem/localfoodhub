@@ -351,6 +351,12 @@ model Order {
   orderStatus   String @default("PENDING")
   notes         String?
 
+  // Cancellation is only permitted while the shop has not accepted yet — enforced
+  // server-side in /api/orders/[id]/cancel, never by hiding the button alone.
+  cancelledAt        DateTime?
+  cancelledBy        String? // CUSTOMER | VENDOR
+  cancellationReason String?
+
   // Optional overall-experience rating, separate from each item's own review (spec
   // Section 205-208) — service/delivery/pickup context depends on orderType.
   experienceRating   Int?
@@ -574,6 +580,13 @@ model Notification {
   title     String
   body      String
   read      Boolean  @default(false)
+
+  // Deep-link targets so a notification opens the thing it is about, rather than
+  // being a dead card. All optional — a notification may reference none of them.
+  orderId   String?
+  shopId    String?
+  productId String?
+
   createdAt DateTime @default(now())
 }
 

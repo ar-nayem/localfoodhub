@@ -6,6 +6,7 @@ import { Home, Search, QrCode, ClipboardList, User, ShoppingBag } from "lucide-r
 import { Logo } from "@/components/brand/Logo";
 import { useCartStore } from "@/lib/cart/store";
 import { cn } from "@/lib/utils";
+import { NotificationBell } from "./NotificationBell";
 
 const MOBILE_NAV = [
   { href: "/", label: "Home", icon: Home },
@@ -37,6 +38,7 @@ export function CustomerChrome({ children }: { children: React.ReactNode }) {
               Scan QR
             </Link>
           </nav>
+          <NotificationBell variant="desktop" />
           <Link
             href="/cart"
             className="relative flex h-10 w-10 items-center justify-center rounded-full border border-border"
@@ -73,6 +75,7 @@ export function CustomerChrome({ children }: { children: React.ReactNode }) {
             </Link>
           );
         })}
+        <NotificationBell variant="mobile" />
       </nav>
     </div>
   );

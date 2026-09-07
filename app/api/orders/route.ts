@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { getSession, isStaffRole } from "@/lib/auth";
 import { createOrderSchema } from "@/lib/validation/schemas";
 import { createOrder, OrderCreationError } from "@/lib/orders/createOrder";
+import { notificationService } from "@/lib/notifications/ConsoleProvider";
 
 // Public: order history for the logged-in customer, or (for staff) their shop's orders.
 export async function GET(req: NextRequest) {
@@ -44,6 +45,16 @@ export async function POST(req: NextRequest) {
 
   try {
     const { order, alreadyExisted } = await createOrder(parsed.data, customerId);
+    if (!alreadyExisted && order.customerId) {
+      await notificationService.send({
+        userId: order.customerId,
+        type: "ORDER_PLACED",
+        title: "Order placed",
+        body: `Order #${order.orderNumber} is on its way to the shop.`,
+        orderId: order.id,
+        shopId: order.shopId,
+      });
+    }
     return NextResponse.json(order, { status: alreadyExisted ? 200 : 201 });
   } catch (err) {
     if (err instanceof OrderCreationError) {

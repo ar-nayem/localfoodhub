@@ -51,6 +51,8 @@ export async function POST(req: NextRequest) {
       type: "PAYMENT_SUCCESS",
       title: "Payment successful",
       body: `Order #${updated.orderNumber} is confirmed and on its way to the kitchen.`,
+      orderId: updated.id,
+      shopId: updated.shopId,
     });
   }
 

@@ -10,6 +10,10 @@ export interface NotificationInput {
   type: string;
   title: string;
   body: string;
+  /** Deep-link targets — a notification should open whatever it is about. */
+  orderId?: string;
+  shopId?: string;
+  productId?: string;
 }
 
 export interface NotificationProvider {

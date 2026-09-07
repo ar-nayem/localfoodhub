@@ -5,9 +5,10 @@ import { CheckCircle2, MapPin, Clock, ShieldCheck, type LucideIcon } from "lucid
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
 import { formatMoney } from "@/lib/utils";
-import { ORDER_STATUS_FLOW, ORDER_STATUS_LABEL, type OrderType } from "@/lib/constants";
+import { ORDER_STATUS_FLOW, ORDER_STATUS_LABEL, isCancellable, type OrderType } from "@/lib/constants";
 import { toast } from "@/components/ui/Toast";
 import { OrderReviewSection } from "./OrderReviewSection";
+import { CancelOrderDialog } from "./CancelOrderDialog";
 
 interface OrderData {
   id: string;
@@ -20,6 +21,8 @@ interface OrderData {
   deliveryFee: number;
   total: number;
   createdAt: string;
+  cancelledAt?: string | null;
+  cancellationReason?: string | null;
   guestName?: string | null;
   shop: { name: string; phone?: string | null; slug: string };
   table?: { label: string; area: string } | null;
@@ -41,6 +44,9 @@ export function OrderView({
 }) {
   const [order, setOrder] = useState(initialOrder);
   const [verifying, setVerifying] = useState(false);
+  const [cancelOpen, setCancelOpen] = useState(false);
+  const [cancelling, setCancelling] = useState(false);
+  const [cancelError, setCancelError] = useState<string | null>(null);
 
   useEffect(() => {
     if (["COMPLETED", "CANCELLED", "DELIVERED"].includes(order.orderStatus)) return;
@@ -54,6 +60,41 @@ export function OrderView({
   const flow = ORDER_STATUS_FLOW[order.orderType as OrderType] ?? [];
   const currentIndex = flow.indexOf(order.orderStatus);
   const cancelled = order.orderStatus === "CANCELLED";
+  const canCancel = !isVerifyingStaff && isCancellable(order.orderStatus);
+
+  async function cancelOrder(reason: string | null) {
+    setCancelling(true);
+    setCancelError(null);
+    try {
+      const res = await fetch(`/api/orders/${order.id}/cancel`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ reason }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setCancelError(data.error ?? "Could not cancel this order.");
+        // The shop accepted mid-flight — refresh so the UI stops offering Cancel.
+        const fresh = await fetch(`/api/orders/${order.id}`);
+        if (fresh.ok) setOrder(await fresh.json());
+        return;
+      }
+      setOrder(data.order);
+      setCancelOpen(false);
+      toast(
+        data.refundState === "REFUNDED"
+          ? "Order cancelled — refund completed"
+          : data.refundState === "PROCESSING"
+            ? "Order cancelled — refund processing"
+            : "Order cancelled",
+        "success"
+      );
+    } catch {
+      setCancelError("Could not cancel this order.");
+    } finally {
+      setCancelling(false);
+    }
+  }
 
   async function markCollected() {
     setVerifying(true);
@@ -105,12 +146,49 @@ export function OrderView({
         <p className="mt-1 text-sm text-muted-foreground">
           {order.shop.name} · #{order.orderNumber}
         </p>
-        {!cancelled && (
+        {!cancelled ? (
           <Badge tone="primary" className="mt-3">
             {ORDER_STATUS_LABEL[order.orderStatus] ?? order.orderStatus}
           </Badge>
+        ) : (
+          <div className="mt-3">
+            <Badge tone="error">Cancelled</Badge>
+            {order.cancelledAt && (
+              <p className="mt-2 text-sm text-muted-foreground">
+                Cancelled at {new Date(order.cancelledAt).toLocaleString()}
+              </p>
+            )}
+            <p className="mt-1 text-sm text-muted-foreground">
+              Refund:{" "}
+              <span className="font-medium text-foreground">
+                {order.paymentStatus === "REFUNDED"
+                  ? "Completed"
+                  : order.paymentStatus === "PROCESSING"
+                    ? "Processing"
+                    : "Not applicable"}
+              </span>
+            </p>
+          </div>
         )}
       </div>
+
+      {canCancel && (
+        <div className="mt-4 rounded-2xl border border-border bg-surface p-4">
+          <p className="text-sm font-medium">Changed your mind?</p>
+          <p className="mt-1 text-sm text-muted-foreground">
+            You can cancel until the shop accepts this order.
+          </p>
+          <button
+            onClick={() => {
+              setCancelError(null);
+              setCancelOpen(true);
+            }}
+            className="mt-3 rounded-xl border border-error px-4 py-2 text-sm font-semibold text-error"
+          >
+            Cancel Order
+          </button>
+        </div>
+      )}
 
       {order.table && (
         <InfoRow icon={MapPin} label="Table" value={`${order.table.area} · ${order.table.label}`} />
@@ -194,6 +272,15 @@ export function OrderView({
 
       {order.orderStatus === "COMPLETED" && !isVerifyingStaff && (
         <OrderReviewSection orderId={order.id} orderType={order.orderType} items={order.items} />
+      )}
+
+      {cancelOpen && (
+        <CancelOrderDialog
+          onConfirm={cancelOrder}
+          onClose={() => setCancelOpen(false)}
+          submitting={cancelling}
+          error={cancelError}
+        />
       )}
     </div>
   );

@@ -24,6 +24,7 @@ export async function GET(req: NextRequest) {
               { name: { contains: q } },
               { category: { contains: q } },
               { description: { contains: q } },
+              { products: { some: { name: { contains: q }, status: "AVAILABLE" } } },
             ],
           }
         : {}),

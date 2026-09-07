@@ -19,6 +19,7 @@ export default function CheckoutPage() {
   const [addressLine2, setAddressLine2] = useState("");
   const [city, setCity] = useState("");
   const [pickupTime, setPickupTime] = useState<"ASAP" | "SCHEDULED">("ASAP");
+  const [scheduledTime, setScheduledTime] = useState("");
   const [notes, setNotes] = useState("");
   const [placing, setPlacing] = useState(false);
   const [placingStage, setPlacingStage] = useState<string | null>(null);
@@ -44,6 +45,10 @@ export default function CheckoutPage() {
     }
     if (cart.orderMode === "DELIVERY" && (!addressLine1 || !city)) {
       setError("A delivery address is required.");
+      return;
+    }
+    if (cart.orderMode === "PICKUP" && pickupTime === "SCHEDULED" && !scheduledTime) {
+      setError("Choose a pickup time.");
       return;
     }
     if (cart.orderMode !== "DINE_IN" && (!guestName || !guestPhone)) {
@@ -73,7 +78,12 @@ export default function CheckoutPage() {
           entryQrToken: cart.entryQrToken ?? undefined,
           deliveryAddress:
             cart.orderMode === "DELIVERY" ? { line1: addressLine1, line2: addressLine2, city } : undefined,
-          pickupTime: cart.orderMode === "PICKUP" ? pickupTime : undefined,
+          pickupTime:
+            cart.orderMode === "PICKUP"
+              ? pickupTime === "SCHEDULED"
+                ? new Date(scheduledTime).toISOString()
+                : "ASAP"
+              : undefined,
           promoCode: cart.promoCode ?? undefined,
           guestName: guestName || undefined,
           guestPhone: guestPhone || undefined,
@@ -167,6 +177,15 @@ export default function CheckoutPage() {
             <ModeButton active={pickupTime === "ASAP"} onClick={() => setPickupTime("ASAP")} label="ASAP" />
             <ModeButton active={pickupTime === "SCHEDULED"} onClick={() => setPickupTime("SCHEDULED")} label="Schedule later" />
           </div>
+          {pickupTime === "SCHEDULED" && (
+            <Input
+              type="datetime-local"
+              className="mt-3"
+              value={scheduledTime}
+              min={new Date(Date.now() + 15 * 60_000).toISOString().slice(0, 16)}
+              onChange={(e) => setScheduledTime(e.target.value)}
+            />
+          )}
         </Section>
       )}
 

@@ -86,6 +86,24 @@ export const ORDER_STATUSES = [
 ] as const;
 export type OrderStatus = (typeof ORDER_STATUSES)[number];
 
+// A customer may cancel only until the shop accepts: PENDING (placed, unpaid) and
+// CONFIRMED (paid, still awaiting the shop). Authoritative for both the API guard and
+// the UI — the button and the server rule must never drift apart.
+export const CANCELLABLE_ORDER_STATUSES = ["PENDING", "PAYMENT_PENDING", "CONFIRMED"] as const;
+
+export function isCancellable(orderStatus: string): boolean {
+  return (CANCELLABLE_ORDER_STATUSES as readonly string[]).includes(orderStatus);
+}
+
+export const CANCELLATION_REASONS = [
+  "Ordered by mistake",
+  "Changed my mind",
+  "Taking too long",
+  "Found another option",
+  "Payment issue",
+  "Other",
+] as const;
+
 export const ORDER_STATUS_LABEL: Record<string, string> = {
   PENDING: "Order placed",
   PAYMENT_PENDING: "Awaiting payment",

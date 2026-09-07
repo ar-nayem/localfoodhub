@@ -28,11 +28,15 @@ export default async function OrderPage({
   if (!order) notFound();
 
   const session = await getSession();
-  const isVerifyingStaff =
-    !!searchParams.verify &&
-    !!session &&
-    isStaffRole(session.role) &&
-    session.shopIds.includes(order.shopId);
+  const isOwner = !!session && session.userId === order.customerId;
+  const isStaffOfShop = !!session && isStaffRole(session.role) && session.shopIds.includes(order.shopId);
+
+  // Guest orders (customerId null) stay link-accessible without login. An order placed by
+  // a signed-in customer is only visible to that customer or staff of the order's shop —
+  // never trust the URL alone for ownership (spec Rule 11).
+  if (order.customerId && !isOwner && !isStaffOfShop) notFound();
+
+  const isVerifyingStaff = !!searchParams.verify && isStaffOfShop;
 
   const qrImage = order.qrCode
     ? await QRCodeLib.toDataURL(qrPublicUrl(order.qrCode.token), { width: 320, margin: 2 })
@@ -45,6 +49,7 @@ export default async function OrderPage({
           ...order,
           createdAt: order.createdAt.toISOString(),
           pickupTime: order.pickupTime?.toISOString() ?? null,
+          cancelledAt: order.cancelledAt?.toISOString() ?? null,
         }}
         qrImage={qrImage}
         justPaid={searchParams.justPaid === "1"}

@@ -43,3 +43,11 @@ body {
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
+
+/* Keyboard users get a visible focus ring everywhere; mouse/touch users don't, so this
+   never changes the look of a normal click. */
+:focus-visible {
+  outline: 2px solid hsl(var(--primary));
+  outline-offset: 2px;
+  border-radius: 6px;
+}

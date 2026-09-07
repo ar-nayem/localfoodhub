@@ -134,6 +134,9 @@ export async function POST(req: NextRequest) {
         type: "NEW_REVIEW",
         title: "New review",
         body: `${d.rating}★ review on order #${orderItem.order.orderNumber}`,
+        orderId: orderItem.orderId,
+        shopId: orderItem.order.shopId,
+        productId: orderItem.productId,
       });
     }
   }

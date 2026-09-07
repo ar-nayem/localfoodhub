@@ -5,8 +5,9 @@ import { updateOrderStatusSchema } from "@/lib/validation/schemas";
 import { ORDER_STATUS_FLOW, type OrderType } from "@/lib/constants";
 import { notificationService } from "@/lib/notifications/ConsoleProvider";
 
-// Order IDs are unguessable cuids, so a direct link to an order (confirmation page, order
-// QR) works without forcing login — same model as most checkout confirmation URLs.
+// Guest orders (customerId null) stay link-accessible without login — same model as most
+// checkout confirmation URLs. An order placed by a signed-in customer is only readable by
+// that customer or staff of the order's shop; everyone else gets 404 (spec Rule 11).
 export async function GET(_req: NextRequest, { params }: { params: { id: string } }) {
   const order = await prisma.order.findUnique({
     where: { id: params.id },
@@ -20,6 +21,16 @@ export async function GET(_req: NextRequest, { params }: { params: { id: string 
     },
   });
   if (!order) return NextResponse.json({ error: "Order not found" }, { status: 404 });
+
+  if (order.customerId) {
+    const session = await getSession();
+    const isOwner = session?.userId === order.customerId;
+    const isStaff = !!session && isStaffRole(session.role) && session.shopIds.includes(order.shopId);
+    if (!isOwner && !isStaff) {
+      return NextResponse.json({ error: "Order not found" }, { status: 404 });
+    }
+  }
+
   return NextResponse.json(order);
 }
 
@@ -43,6 +54,12 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
   }
 
   const nextStatus = parsed.data.status;
+  if (order.orderStatus === "CANCELLED") {
+    return NextResponse.json(
+      { error: "This order was cancelled by the customer and can no longer be updated." },
+      { status: 409 }
+    );
+  }
   if (nextStatus !== "CANCELLED") {
     const flow = ORDER_STATUS_FLOW[order.orderType as OrderType];
     const currentIndex = flow.indexOf(order.orderStatus);
@@ -52,10 +69,27 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
     }
   }
 
-  const updated = await prisma.order.update({
-    where: { id: order.id },
+  // Optimistic concurrency: only move the order if it is still in the status we validated
+  // against. A customer cancelling at the same instant flips that status first, so this
+  // update matches nothing and we report the conflict instead of silently clobbering the
+  // cancellation (an order must never end up both ACCEPTED and CANCELLED).
+  const claimed = await prisma.order.updateMany({
+    where: { id: order.id, orderStatus: order.orderStatus },
     data: { orderStatus: nextStatus },
   });
+  if (claimed.count === 0) {
+    const current = await prisma.order.findUnique({ where: { id: order.id } });
+    return NextResponse.json(
+      {
+        error:
+          current?.orderStatus === "CANCELLED"
+            ? "This order was just cancelled by the customer."
+            : "This order was updated by someone else. Refresh and try again.",
+      },
+      { status: 409 }
+    );
+  }
+  const updated = (await prisma.order.findUnique({ where: { id: order.id } }))!;
 
   if (updated.tableId) {
     const tableStatus =
@@ -74,6 +108,8 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
       type: "ORDER_STATUS",
       title: `Order #${updated.orderNumber} updated`,
       body: statusMessage(nextStatus),
+      orderId: updated.id,
+      shopId: updated.shopId,
     });
   }
 
