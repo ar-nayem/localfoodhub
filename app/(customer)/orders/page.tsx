@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { ClipboardList } from "lucide-react";
 import { Badge } from "@/components/ui/Badge";
+import { FoodThumb } from "@/components/customer/FoodThumb";
 import { formatMoney, cn } from "@/lib/utils";
 import { ORDER_STATUS_LABEL, isCancellable } from "@/lib/constants";
 
@@ -14,7 +15,8 @@ interface OrderSummary {
   orderStatus: string;
   total: number;
   createdAt: string;
-  shop: { name: string; slug: string };
+  shop: { name: string; slug: string; logoUrl?: string | null };
+  items: { id: string; quantity: number }[];
 }
 
 const CLOSED_STATUSES = ["COMPLETED", "DELIVERED", "CANCELLED", "REFUNDED"];
@@ -92,19 +94,38 @@ export default function OrdersPage() {
       ) : (
         <div className="flex flex-col gap-3">
           {visible.map((o) => (
-            <div key={o.id} className="rounded-xl border border-border bg-surface p-4">
+            <div key={o.id} className="rounded-2xl border border-border bg-surface p-4">
               <div className="flex items-start justify-between gap-3">
-                <div className="min-w-0">
-                  <p className="font-medium">{o.shop.name}</p>
-                  <p className="text-xs text-muted-foreground">
-                    #{o.orderNumber} · {new Date(o.createdAt).toLocaleDateString()}
-                  </p>
+                <div className="flex min-w-0 gap-3">
+                  <div className="h-11 w-11 shrink-0 overflow-hidden rounded-xl">
+                    <FoodThumb
+                      src={o.shop.logoUrl}
+                      label={o.shop.name}
+                      rounded="rounded-xl"
+                      glyphClassName="text-lg"
+                    />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-sm font-bold">#{o.orderNumber}</p>
+                    <p className="truncate text-sm text-muted-foreground">{o.shop.name}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {o.items.reduce((n, i) => n + i.quantity, 0)} item
+                      {o.items.reduce((n, i) => n + i.quantity, 0) === 1 ? "" : "s"} ·{" "}
+                      {formatMoney(o.total)}
+                    </p>
+                  </div>
                 </div>
                 <div className="shrink-0 text-right">
-                  <p className="font-semibold">{formatMoney(o.total)}</p>
                   <Badge tone={o.orderStatus === "CANCELLED" ? "error" : "primary"}>
                     {ORDER_STATUS_LABEL[o.orderStatus] ?? o.orderStatus}
                   </Badge>
+                  <p className="mt-1 text-[11px] text-muted-foreground">
+                    {new Date(o.createdAt).toLocaleDateString(undefined, {
+                      month: "short",
+                      day: "numeric",
+                      year: "numeric",
+                    })}
+                  </p>
                 </div>
               </div>
               <div className="mt-3 flex flex-wrap gap-2">

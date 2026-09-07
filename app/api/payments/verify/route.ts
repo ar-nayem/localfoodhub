@@ -27,7 +27,11 @@ export async function POST(req: NextRequest) {
 
   const updated = await prisma.order.update({
     where: { id: order.id },
-    data: { paymentStatus: "PAID", orderStatus: "CONFIRMED" },
+    data: {
+      paymentStatus: "PAID",
+      orderStatus: "CONFIRMED",
+      statusEvents: { create: { status: "CONFIRMED" } },
+    },
   });
 
   // Every confirmed order gets its own ORDER QR (spec Section 14/57) — customer shows it

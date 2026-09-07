@@ -18,6 +18,7 @@ export async function GET(_req: NextRequest, { params }: { params: { id: string 
       deliveryAddress: true,
       payment: true,
       qrCode: true,
+      statusEvents: { orderBy: { createdAt: "asc" } },
     },
   });
   if (!order) return NextResponse.json({ error: "Order not found" }, { status: 404 });
@@ -89,6 +90,7 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
       { status: 409 }
     );
   }
+  await prisma.orderStatusEvent.create({ data: { orderId: order.id, status: nextStatus } });
   const updated = (await prisma.order.findUnique({ where: { id: order.id } }))!;
 
   if (updated.tableId) {
@@ -118,7 +120,7 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
   // would crash the client on the very next render.
   const full = await prisma.order.findUnique({
     where: { id: updated.id },
-    include: { items: true, shop: true, table: true, deliveryAddress: true, payment: true, qrCode: true },
+    include: { items: true, shop: true, table: true, deliveryAddress: true, payment: true, qrCode: true, statusEvents: { orderBy: { createdAt: "asc" } } },
   });
   return NextResponse.json(full);
 }

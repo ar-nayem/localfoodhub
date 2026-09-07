@@ -364,11 +364,12 @@ model Order {
   experienceComment  String?
   experienceReviewedAt DateTime?
 
-  items    OrderItem[]
-  payment  Payment?
-  delivery Delivery?
-  reviews  Review[]
-  qrCode   QRCode?
+  items         OrderItem[]
+  statusEvents  OrderStatusEvent[]
+  payment       Payment?
+  delivery      Delivery?
+  reviews       Review[]
+  qrCode        QRCode?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -600,4 +601,18 @@ model AuditLog {
   before    String? // JSON
   after     String? // JSON
   createdAt DateTime @default(now())
+}
+
+// One row per status transition, so the customer's tracking timeline can show when each
+// step actually happened instead of inventing timestamps.
+model OrderStatusEvent {
+  id      String @id @default(cuid())
+  orderId String
+  order   Order  @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  status  String
+  note    String?
+
+  createdAt DateTime @default(now())
+
+  @@index([orderId])
 }

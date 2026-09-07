@@ -7,6 +7,8 @@ import { Minus, Plus, ShoppingBag } from "lucide-react";
 import { useCartStore } from "@/lib/cart/store";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
+import { FoodThumb } from "@/components/customer/FoodThumb";
+import { BackButton } from "@/components/customer/BackButton";
 import { formatMoney } from "@/lib/utils";
 
 export default function CartPage() {
@@ -22,6 +24,7 @@ export default function CartPage() {
     promoDiscount,
     setPromo,
     shopId,
+    shopSlug: cartShopSlug,
   } = useCartStore();
   const [promoInput, setPromoInput] = useState("");
   const [promoError, setPromoError] = useState<string | null>(null);
@@ -67,49 +70,70 @@ export default function CartPage() {
   }
 
   return (
-    <main className="mx-auto max-w-lg px-4 pb-40 pt-6">
-      <h1 className="text-xl font-bold">Your order</h1>
-      <p className="mt-0.5 text-sm text-muted-foreground">
+    <main className="mx-auto max-w-lg px-4 pb-40 pt-4">
+      <div className="mb-4 flex items-center gap-3">
+        <BackButton fallback="/explore" />
+        <h1 className="text-xl font-bold">Your Cart</h1>
+      </div>
+      <p className="-mt-2 mb-4 text-sm text-muted-foreground">
         {shopName}
         {orderMode && ` · ${orderMode === "DINE_IN" ? `Dine-in — Table ${tableLabel}` : orderMode === "DELIVERY" ? "Delivery" : "Pickup"}`}
       </p>
 
-      <div className="mt-5 flex flex-col gap-3">
+      <div className="flex flex-col gap-3">
         {items.map((item) => (
-          <div key={item.key} className="flex items-start justify-between gap-3 rounded-xl border border-border bg-surface p-3">
+          <div
+            key={item.key}
+            className="flex items-center gap-3 rounded-2xl border border-border bg-surface p-3"
+          >
+            <div className="h-14 w-14 shrink-0 overflow-hidden rounded-xl">
+              <FoodThumb src={item.imageUrl} label={item.name} rounded="rounded-xl" glyphClassName="text-xl" />
+            </div>
             <div className="min-w-0 flex-1">
-              <p className="font-medium">{item.name}</p>
+              <p className="truncate font-semibold">{item.name}</p>
+              <p className="truncate text-xs text-muted-foreground">{shopName}</p>
               {item.selectedOptions.length > 0 && (
-                <p className="text-xs text-muted-foreground">
+                <p className="truncate text-xs text-muted-foreground">
                   {item.selectedOptions.map((o) => o.valueLabel).join(", ")}
                 </p>
               )}
               {item.selectedAddons.length > 0 && (
-                <p className="text-xs text-muted-foreground">
+                <p className="truncate text-xs text-muted-foreground">
                   +{item.selectedAddons.map((a) => a.name).join(", ")}
                 </p>
               )}
-              {item.notes && <p className="text-xs italic text-muted-foreground">&quot;{item.notes}&quot;</p>}
-              <p className="mt-1 text-sm font-semibold text-primary">{formatMoney(item.unitPrice)}</p>
+              {item.notes && <p className="truncate text-xs italic text-muted-foreground">&quot;{item.notes}&quot;</p>}
+              <p className="mt-0.5 text-sm font-bold text-primary">{formatMoney(item.unitPrice)}</p>
             </div>
-            <div className="flex items-center gap-2 rounded-full border border-border px-1.5 py-1">
+            <div className="flex shrink-0 items-center gap-1.5">
               <button
                 onClick={() => setQuantity(item.key, item.quantity - 1)}
-                className="flex h-7 w-7 items-center justify-center rounded-full"
+                aria-label={`Decrease ${item.name}`}
+                className="flex h-8 w-8 items-center justify-center rounded-full border border-border"
               >
-                <Minus size={13} />
+                <Minus size={14} />
               </button>
-              <span className="w-4 text-center text-sm font-medium">{item.quantity}</span>
+              <span className="w-4 text-center text-sm font-semibold">{item.quantity}</span>
               <button
                 onClick={() => setQuantity(item.key, item.quantity + 1)}
-                className="flex h-7 w-7 items-center justify-center rounded-full"
+                aria-label={`Increase ${item.name}`}
+                className="flex h-8 w-8 items-center justify-center rounded-full bg-primary text-primary-foreground"
               >
-                <Plus size={13} />
+                <Plus size={14} />
               </button>
             </div>
           </div>
         ))}
       </div>
+
+      {cartShopSlug && (
+        <Link
+          href={`/s/${cartShopSlug}`}
+          className="mt-3 flex items-center justify-center gap-1.5 rounded-2xl border border-dashed border-border py-3 text-sm font-medium text-primary"
+        >
+          <Plus size={15} /> Add more items
+        </Link>
+      )}
 
       <div className="mt-5 flex gap-2">
         <Input
@@ -125,24 +149,24 @@ export default function CartPage() {
       {promoError && <p className="mt-1.5 text-sm text-error">{promoError}</p>}
       {promoCode && <p className="mt-1.5 text-sm text-success">Promo {promoCode} applied: -{formatMoney(promoDiscount)}</p>}
 
-      <div className="fixed inset-x-0 bottom-0 z-30 border-t border-border bg-surface px-4 py-4">
-        <div className="mx-auto max-w-lg">
-          <div className="flex justify-between text-sm text-muted-foreground">
-            <span>Subtotal</span>
-            <span>{formatMoney(sub)}</span>
+      <div className="fixed inset-x-0 bottom-16 z-30 border-t border-border bg-surface px-4 py-4 sm:bottom-0">
+        <div className="mx-auto flex max-w-lg items-center gap-4">
+          <div className="min-w-0">
+            {promoDiscount > 0 && (
+              <div className="flex gap-2 text-xs text-success">
+                <span>Discount</span>
+                <span>-{formatMoney(promoDiscount)}</span>
+              </div>
+            )}
+            <p className="text-xs text-muted-foreground">Total</p>
+            <p className="text-xl font-bold leading-tight">{formatMoney(total)}</p>
           </div>
-          {promoDiscount > 0 && (
-            <div className="flex justify-between text-sm text-success">
-              <span>Discount</span>
-              <span>-{formatMoney(promoDiscount)}</span>
-            </div>
-          )}
-          <div className="mt-1 flex justify-between text-base font-bold">
-            <span>Total</span>
-            <span>{formatMoney(total)}</span>
-          </div>
-          <Button onClick={() => router.push("/checkout")} className="mt-3 w-full" size="lg">
-            Continue to checkout
+          <Button
+            onClick={() => router.push("/checkout")}
+            className="ml-auto flex-1 rounded-full"
+            size="lg"
+          >
+            Continue
           </Button>
         </div>
       </div>

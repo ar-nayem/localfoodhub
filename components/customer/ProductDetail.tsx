@@ -2,13 +2,15 @@
 
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { ChevronLeft, Minus, Plus, Clock } from "lucide-react";
+import { ChevronLeft, Minus, Plus, Clock, Star, BadgeCheck } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Textarea } from "@/components/ui/Input";
 import { Badge } from "@/components/ui/Badge";
 import { formatMoney, cn } from "@/lib/utils";
 import { useCartStore, cartLineKey } from "@/lib/cart/store";
 import { ReviewList } from "./ReviewList";
+import { FoodThumb } from "./FoodThumb";
+import { FavoriteHeart } from "./FavoriteHeart";
 import { toast } from "@/components/ui/Toast";
 
 interface OptionValue {
@@ -33,7 +35,7 @@ export function ProductDetail({
   product: {
     id: string;
     shopId: string;
-    shop: { slug: string; name: string };
+    shop: { slug: string; name: string; rating: number; ratingCount: number };
     name: string;
     description: string;
     price: number;
@@ -101,28 +103,44 @@ export function ProductDetail({
 
   return (
     <div>
-      <div className="relative aspect-square w-full bg-muted sm:aspect-[4/3] sm:rounded-b-2xl">
-        {product.imageUrl ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img src={product.imageUrl} alt={product.name} className="h-full w-full object-cover sm:rounded-b-2xl" />
-        ) : (
-          <div className="flex h-full w-full items-center justify-center text-6xl">🍲</div>
-        )}
+      <div className="relative aspect-square w-full sm:aspect-[16/7] sm:overflow-hidden sm:rounded-b-3xl">
+        <FoodThumb
+          src={product.imageUrl}
+          label={product.name}
+          rounded="rounded-none"
+          glyphClassName="text-7xl"
+        />
         <button
           onClick={() => router.back()}
-          className="absolute left-4 top-4 flex h-9 w-9 items-center justify-center rounded-full bg-white/90 shadow"
+          className="absolute left-4 top-4 flex h-9 w-9 items-center justify-center rounded-full bg-white/90 shadow-sm backdrop-blur"
           aria-label="Back"
         >
-          <ChevronLeft size={18} />
+          <ChevronLeft size={20} />
         </button>
+        <span className="absolute right-4 top-4 flex h-9 w-9 items-center justify-center rounded-full bg-white/90 shadow-sm backdrop-blur">
+          <FavoriteHeart productId={product.id} />
+        </span>
       </div>
 
-      <div className="px-4 pt-4 sm:px-6">
+      <div className="relative -mt-5 rounded-t-3xl bg-background px-4 pt-5 sm:mt-0 sm:px-6 sm:pt-4">
         <h1 className="text-xl font-bold">{product.name}</h1>
-        <p className="mt-1 text-sm text-muted-foreground">{product.description}</p>
+        <p className="text-sm text-muted-foreground">{product.shop.name}</p>
+
+        <div className="mt-1.5 flex flex-wrap items-center gap-2 text-sm">
+          <span className="flex items-center gap-1 font-medium">
+            <Star size={14} className="fill-warning text-warning" />
+            {product.shop.rating > 0 ? product.shop.rating.toFixed(1) : "New"}
+            {product.shop.ratingCount > 0 && (
+              <span className="text-muted-foreground">({product.shop.ratingCount} reviews)</span>
+            )}
+          </span>
+          <span className="flex items-center gap-1 rounded-full bg-success/10 px-2 py-0.5 text-xs font-medium text-success">
+            <BadgeCheck size={13} /> Verified
+          </span>
+        </div>
 
         <div className="mt-2 flex flex-wrap items-center gap-3">
-          <span className="text-lg font-semibold text-primary">{formatMoney(basePrice)}</span>
+          <span className="text-2xl font-bold text-primary">{formatMoney(basePrice)}</span>
           {product.discountPrice && (
             <span className="text-sm text-muted-foreground line-through">{formatMoney(product.price)}</span>
           )}
@@ -130,6 +148,8 @@ export function ProductDetail({
             <Clock size={14} /> {product.prepTimeMinutes} min
           </span>
         </div>
+
+        <p className="mt-2 text-sm text-muted-foreground">{product.description}</p>
 
         {product.dietaryTags.length > 0 && (
           <div className="mt-2 flex flex-wrap gap-1.5">
@@ -216,9 +236,11 @@ export function ProductDetail({
         )}
 
         <ReviewList productId={product.id} shopName={product.shop.name} />
+        {/* Clears the fixed add-to-cart bar plus the mobile bottom nav. */}
+        <div className="h-24 sm:h-0" aria-hidden />
       </div>
 
-      <div className="fixed inset-x-0 bottom-0 z-30 border-t border-border bg-surface px-4 py-3 sm:sticky">
+      <div className="fixed inset-x-0 bottom-16 z-30 border-t border-border bg-surface px-4 py-3 sm:bottom-0 sm:sticky">
         <div className="mx-auto flex max-w-2xl items-center gap-3">
           <div className="flex items-center gap-3 rounded-full border border-border px-2 py-1">
             <button
@@ -240,10 +262,10 @@ export function ProductDetail({
           <Button
             onClick={handleAdd}
             disabled={unavailable || missingRequiredOption}
-            className="flex-1"
+            className="flex-1 rounded-full"
             size="lg"
           >
-            Add to cart — {formatMoney(unitPrice * quantity)}
+            Add to Cart · {formatMoney(unitPrice * quantity)}
           </Button>
         </div>
       </div>

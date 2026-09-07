@@ -27,7 +27,9 @@ function destinationFor(n: NotificationRow): string | null {
   return null;
 }
 
-export function NotificationBell({ variant }: { variant: "desktop" | "mobile" }) {
+type BellVariant = "desktop" | "mobile" | "mobile-header";
+
+export function NotificationBell({ variant }: { variant: BellVariant }) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [items, setItems] = useState<NotificationRow[] | null>(null);
@@ -140,13 +142,15 @@ export function NotificationBell({ variant }: { variant: "desktop" | "mobile" })
         aria-expanded={open}
         aria-label={unread > 0 ? `Notifications, ${unread} unread` : "Notifications"}
         className={cn(
-          variant === "mobile"
-            ? "flex flex-1 flex-col items-center gap-0.5 py-2.5 text-[11px] text-muted-foreground"
-            : "relative flex h-10 w-10 items-center justify-center rounded-full border border-border"
+          variant === "mobile" &&
+            "flex flex-1 flex-col items-center gap-0.5 py-2.5 text-[11px] text-muted-foreground",
+          variant === "mobile-header" && "relative flex h-10 w-10 items-center justify-center rounded-full",
+          variant === "desktop" &&
+            "relative flex h-10 w-10 items-center justify-center rounded-full border border-border"
         )}
       >
         <span className="relative">
-          <Bell size={variant === "mobile" ? 20 : 18} />
+          <Bell size={variant === "desktop" ? 18 : 20} />
           {badge}
         </span>
         {variant === "mobile" && "Alerts"}
@@ -160,9 +164,9 @@ export function NotificationBell({ variant }: { variant: "desktop" | "mobile" })
           aria-label="Notifications"
           className={cn(
             "z-50 w-[min(22rem,calc(100vw-2rem))] overflow-hidden rounded-2xl border border-border bg-surface shadow-lg outline-none",
-            variant === "mobile"
-              ? "fixed bottom-16 left-1/2 max-h-[60vh] -translate-x-1/2"
-              : "absolute right-0 top-12 max-h-[70vh]"
+            variant === "mobile" && "fixed bottom-16 left-1/2 max-h-[60vh] -translate-x-1/2",
+            variant === "mobile-header" && "fixed right-4 top-16 max-h-[70vh]",
+            variant === "desktop" && "absolute right-0 top-12 max-h-[70vh]"
           )}
         >
           <div className="flex items-center justify-between border-b border-border px-4 py-3">

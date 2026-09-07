@@ -20,8 +20,8 @@ export function SearchBar({ initialValue = "" }: { initialValue?: string }) {
       <input
         value={value}
         onChange={(e) => setValue(e.target.value)}
-        placeholder="Search shops or food..."
-        className="h-12 w-full rounded-xl border border-border bg-surface pl-11 pr-4 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40"
+        placeholder="Search for food, shops, or cuisines..."
+        className="h-12 w-full rounded-full border border-border bg-surface pl-11 pr-4 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-primary/40 sm:rounded-xl"
       />
     </form>
   );

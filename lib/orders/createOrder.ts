@@ -187,6 +187,7 @@ export async function createOrder(
         orderStatus: "PENDING",
         notes: input.notes,
         items: { create: orderItemsData },
+        statusEvents: { create: { status: "PENDING" } },
       },
       include: { items: true, shop: true, table: true },
     });

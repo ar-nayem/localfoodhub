@@ -50,6 +50,12 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
     },
   });
 
+  if (claimed.count > 0) {
+    await prisma.orderStatusEvent.create({
+      data: { orderId: order.id, status: "CANCELLED", note: reason },
+    });
+  }
+
   // Lost the race — the vendor's Accept committed first.
   if (claimed.count === 0) {
     return NextResponse.json(
@@ -101,7 +107,7 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
 
   const full = await prisma.order.findUnique({
     where: { id: order.id },
-    include: { items: true, shop: true, table: true, deliveryAddress: true, payment: true, qrCode: true },
+    include: { items: true, shop: true, table: true, deliveryAddress: true, payment: true, qrCode: true, statusEvents: { orderBy: { createdAt: "asc" } } },
   });
   return NextResponse.json({ order: full, refundState });
 }

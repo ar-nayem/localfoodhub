@@ -2,26 +2,35 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, Search, QrCode, ClipboardList, User, ShoppingBag } from "lucide-react";
+import { Home, QrCode, ClipboardList, User, ShoppingBag, Heart, MapPin, ChevronDown } from "lucide-react";
 import { Logo } from "@/components/brand/Logo";
 import { useCartStore } from "@/lib/cart/store";
 import { cn } from "@/lib/utils";
 import { NotificationBell } from "./NotificationBell";
 
+// Bottom navigation. The second slot is the QR scanner rather than Explore — scanning is
+// the primary way into this marketplace, and Explore stays one tap away from the home
+// screen's discovery card.
 const MOBILE_NAV = [
   { href: "/", label: "Home", icon: Home },
-  { href: "/explore", label: "Search", icon: Search },
   { href: "/scan", label: "Scan", icon: QrCode },
   { href: "/orders", label: "Orders", icon: ClipboardList },
+  { href: "/favorites", label: "Favorites", icon: Heart },
   { href: "/profile", label: "Profile", icon: User },
 ];
+
+/** Routes that render their own full-bleed mobile header (shop page, product detail,
+ * order tracking) and should not get the standard location bar stacked above them. */
+const MOBILE_BARE_HEADER = ["/s/", "/orders/", "/cart", "/checkout", "/scan", "/discover"];
 
 export function CustomerChrome({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const itemCount = useCartStore((s) => s.itemCount());
+  const showMobileHeader = !MOBILE_BARE_HEADER.some((p) => pathname.startsWith(p));
 
   return (
     <div className="min-h-screen pb-20 sm:pb-0">
+      {/* Desktop header */}
       <header className="sticky top-0 z-30 hidden border-b border-border bg-surface/95 backdrop-blur sm:block">
         <div className="mx-auto flex max-w-6xl items-center gap-6 px-6 py-3">
           <Link href="/">
@@ -56,26 +65,61 @@ export function CustomerChrome({ children }: { children: React.ReactNode }) {
         </div>
       </header>
 
+      {/* Mobile header — location on the left, alerts on the right. */}
+      {showMobileHeader && (
+        <header className="sticky top-0 z-30 bg-background/95 px-4 pb-2 pt-3 backdrop-blur sm:hidden">
+          <div className="flex items-center justify-between">
+            <Link href="/explore" className="flex items-center gap-2 text-left">
+              <span className="flex h-9 w-9 items-center justify-center rounded-full bg-primary/10 text-primary">
+                <MapPin size={17} />
+              </span>
+              <span className="leading-tight">
+                <span className="block text-[11px] text-muted-foreground">Your Location</span>
+                <span className="flex items-center gap-1 text-sm font-semibold">
+                  Riverside Food Court
+                  <ChevronDown size={14} className="text-muted-foreground" />
+                </span>
+              </span>
+            </Link>
+            <div className="flex items-center gap-1.5">
+              <Link
+                href="/cart"
+                aria-label="Cart"
+                className="relative flex h-10 w-10 items-center justify-center rounded-full"
+              >
+                <ShoppingBag size={20} />
+                {itemCount > 0 && (
+                  <span className="absolute right-1 top-1 flex h-4 w-4 items-center justify-center rounded-full bg-primary text-[10px] text-primary-foreground">
+                    {itemCount}
+                  </span>
+                )}
+              </Link>
+              <NotificationBell variant="mobile-header" />
+            </div>
+          </div>
+        </header>
+      )}
+
       {children}
 
-      <nav className="fixed inset-x-0 bottom-0 z-30 flex border-t border-border bg-surface sm:hidden">
+      <nav className="fixed inset-x-0 bottom-0 z-30 flex border-t border-border bg-surface pb-[env(safe-area-inset-bottom)] sm:hidden">
         {MOBILE_NAV.map(({ href, label, icon: Icon }) => {
           const active = href === "/" ? pathname === "/" : pathname.startsWith(href);
           return (
             <Link
               key={href}
               href={href}
+              aria-current={active ? "page" : undefined}
               className={cn(
-                "flex flex-1 flex-col items-center gap-0.5 py-2.5 text-[11px]",
+                "flex flex-1 flex-col items-center gap-1 py-2.5 text-[10px] font-medium",
                 active ? "text-primary" : "text-muted-foreground"
               )}
             >
-              <Icon size={20} />
+              <Icon size={21} className={cn(active && "fill-primary/15")} />
               {label}
             </Link>
           );
         })}
-        <NotificationBell variant="mobile" />
       </nav>
     </div>
   );

@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Percent, MapPin, Clock } from "lucide-react";
+import { FoodThumb } from "./FoodThumb";
 import { formatMoney, safeJsonParse } from "@/lib/utils";
 import type { SectionConfig } from "@/lib/storefront/theme";
 
@@ -85,13 +86,8 @@ export function StorefrontSections({
                     href={`/s/${shopSlug}/product/${p.id}`}
                     className="w-32 shrink-0 rounded-xl border border-border bg-surface p-2"
                   >
-                    <div className="mb-1.5 h-20 w-full overflow-hidden rounded-lg bg-muted">
-                      {p.imageUrl ? (
-                        // eslint-disable-next-line @next/next/no-img-element
-                        <img src={p.imageUrl} alt={p.name} className="h-full w-full object-cover" />
-                      ) : (
-                        <div className="flex h-full w-full items-center justify-center text-xl">🍲</div>
-                      )}
+                    <div className="mb-1.5 h-20 w-full overflow-hidden rounded-lg">
+                      <FoodThumb src={p.imageUrl} label={p.name} rounded="rounded-lg" glyphClassName="text-2xl" />
                     </div>
                     <p className="truncate text-xs font-medium">{p.name}</p>
                     <p className="text-xs font-semibold text-primary">{formatMoney(p.discountPrice ?? p.price)}</p>

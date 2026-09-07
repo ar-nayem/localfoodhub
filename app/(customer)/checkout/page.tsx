@@ -6,6 +6,7 @@ import { Truck, ShoppingBag, UtensilsCrossed, CreditCard, type LucideIcon } from
 import { useCartStore } from "@/lib/cart/store";
 import { Button } from "@/components/ui/Button";
 import { Input, Label, Textarea } from "@/components/ui/Input";
+import { BackButton } from "@/components/customer/BackButton";
 import { formatMoney, cn } from "@/lib/utils";
 import { toast } from "@/components/ui/Toast";
 
@@ -133,10 +134,13 @@ export default function CheckoutPage() {
   if (cart.items.length === 0 && !orderPlaced) return null;
 
   return (
-    <main className="mx-auto max-w-lg px-4 pb-40 pt-6">
-      <h1 className="text-xl font-bold">Checkout</h1>
+    <main className="mx-auto max-w-lg px-4 pb-44 pt-4">
+      <div className="flex items-center gap-3">
+        <BackButton fallback="/cart" />
+        <h1 className="text-xl font-bold">Checkout</h1>
+      </div>
 
-      <Section title="Order type">
+      <Section title="Order Type">
         {cart.orderMode === "DINE_IN" ? (
           <div className="flex items-center gap-2 rounded-xl border border-primary/30 bg-primary/5 px-3.5 py-3 text-sm font-medium text-primary">
             <UtensilsCrossed size={16} /> Dine-in — Table {cart.tableLabel}
@@ -162,7 +166,7 @@ export default function CheckoutPage() {
       </Section>
 
       {cart.orderMode === "DELIVERY" && (
-        <Section title="Delivery address">
+        <Section title="Delivery Address">
           <div className="flex flex-col gap-3">
             <Input placeholder="Street address" value={addressLine1} onChange={(e) => setAddressLine1(e.target.value)} />
             <Input placeholder="Apartment, floor, etc. (optional)" value={addressLine2} onChange={(e) => setAddressLine2(e.target.value)} />
@@ -172,7 +176,7 @@ export default function CheckoutPage() {
       )}
 
       {cart.orderMode === "PICKUP" && (
-        <Section title="Pickup time">
+        <Section title="Pickup Time">
           <div className="flex gap-2">
             <ModeButton active={pickupTime === "ASAP"} onClick={() => setPickupTime("ASAP")} label="ASAP" />
             <ModeButton active={pickupTime === "SCHEDULED"} onClick={() => setPickupTime("SCHEDULED")} label="Schedule later" />
@@ -190,7 +194,7 @@ export default function CheckoutPage() {
       )}
 
       {cart.orderMode !== "DINE_IN" && (
-        <Section title="Contact details">
+        <Section title="Contact Details">
           <div className="flex flex-col gap-3">
             <div>
               <Label htmlFor="name">Name</Label>
@@ -208,27 +212,30 @@ export default function CheckoutPage() {
         <Textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={2} placeholder="Anything the shop should know?" />
       </Section>
 
-      <Section title="Payment method">
-        <div className="flex items-center gap-2 rounded-xl border border-primary bg-primary/5 px-3.5 py-3 text-sm font-medium">
-          <CreditCard size={16} className="text-primary" />
-          Pay now (test payment)
+      <Section title="Payment Method">
+        <div className="flex items-center gap-3 rounded-2xl border border-primary bg-primary/5 px-3.5 py-3.5">
+          <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 text-primary">
+            <CreditCard size={18} />
+          </span>
+          <span className="min-w-0 flex-1">
+            <span className="block text-sm font-semibold">Pay Online</span>
+            <span className="block text-xs text-muted-foreground">
+              Test payment — card, bKash, Nagad and Rocket come later
+            </span>
+          </span>
         </div>
-        <p className="mt-2 text-xs text-muted-foreground">
-          Card, bKash, Nagad, and Rocket are coming soon — this checkout runs on a test
-          payment flow for now.
-        </p>
       </Section>
 
       {error && <p className="mt-3 text-sm text-error">{error}</p>}
 
-      <div className="fixed inset-x-0 bottom-0 z-30 border-t border-border bg-surface px-4 py-4">
-        <div className="mx-auto max-w-lg">
-          <div className="mb-2 flex justify-between text-sm text-muted-foreground">
-            <span>Total</span>
-            <span className="text-base font-bold text-foreground">{formatMoney(total)}</span>
+      <div className="fixed inset-x-0 bottom-16 z-30 border-t border-border bg-surface px-4 py-4 sm:bottom-0">
+        <div className="mx-auto flex max-w-lg items-center gap-4">
+          <div className="min-w-0">
+            <p className="text-xs text-muted-foreground">Total</p>
+            <p className="text-xl font-bold leading-tight">{formatMoney(total)}</p>
           </div>
-          <Button onClick={placeOrder} disabled={placing} className="w-full" size="lg">
-            {placing ? placingStage ?? "Placing order..." : `Place Order & Pay ${formatMoney(total)}`}
+          <Button onClick={placeOrder} disabled={placing} className="ml-auto flex-1 rounded-full" size="lg">
+            {placing ? placingStage ?? "Placing order..." : "Place Order"}
           </Button>
         </div>
       </div>

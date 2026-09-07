@@ -29,6 +29,13 @@ interface OrderData {
   deliveryAddress?: { line1: string; line2?: string | null; city: string } | null;
   pickupTime?: string | null;
   items: { id: string; name: string; price: number; quantity: number; notes?: string | null }[];
+  statusEvents?: { status: string; createdAt: string }[];
+}
+
+function timeOf(events: { status: string; createdAt: string }[] | undefined, status: string) {
+  const event = events?.find((e) => e.status === status);
+  if (!event) return null;
+  return new Date(event.createdAt).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
 }
 
 export function OrderView({
@@ -207,21 +214,36 @@ export function OrderView({
       {!cancelled && flow.length > 0 && (
         <div className="mt-5 rounded-2xl border border-border bg-surface p-4">
           <h2 className="mb-3 text-sm font-semibold">Order status</h2>
-          <ol className="flex flex-col gap-3">
-            {flow.map((status, idx) => (
-              <li key={status} className="flex items-center gap-3">
-                <span
-                  className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs ${
-                    idx <= currentIndex ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"
-                  }`}
-                >
-                  {idx <= currentIndex ? "✓" : ""}
-                </span>
-                <span className={idx <= currentIndex ? "font-medium" : "text-muted-foreground"}>
-                  {ORDER_STATUS_LABEL[status]}
-                </span>
-              </li>
-            ))}
+          <ol className="flex flex-col gap-0">
+            {flow.map((status, idx) => {
+              const done = idx <= currentIndex;
+              const at = timeOf(order.statusEvents, status);
+              return (
+                <li key={status} className="flex gap-3">
+                  <div className="flex flex-col items-center">
+                    <span
+                      className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs ${
+                        done ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"
+                      }`}
+                    >
+                      {done ? "✓" : ""}
+                    </span>
+                    {idx < flow.length - 1 && (
+                      <span
+                        className={`w-0.5 flex-1 ${idx < currentIndex ? "bg-primary" : "bg-border"}`}
+                        aria-hidden
+                      />
+                    )}
+                  </div>
+                  <div className="flex flex-1 items-baseline justify-between gap-3 pb-4">
+                    <span className={done ? "text-sm font-medium" : "text-sm text-muted-foreground"}>
+                      {ORDER_STATUS_LABEL[status]}
+                    </span>
+                    <span className="shrink-0 text-xs text-muted-foreground">{at ?? "—"}</span>
+                  </div>
+                </li>
+              );
+            })}
           </ol>
         </div>
       )}

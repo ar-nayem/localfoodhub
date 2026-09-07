@@ -23,6 +23,7 @@ export default async function OrderPage({
       deliveryAddress: true,
       payment: true,
       qrCode: true,
+      statusEvents: { orderBy: { createdAt: "asc" } },
     },
   });
   if (!order) notFound();
@@ -50,6 +51,10 @@ export default async function OrderPage({
           createdAt: order.createdAt.toISOString(),
           pickupTime: order.pickupTime?.toISOString() ?? null,
           cancelledAt: order.cancelledAt?.toISOString() ?? null,
+          statusEvents: order.statusEvents.map((e) => ({
+            status: e.status,
+            createdAt: e.createdAt.toISOString(),
+          })),
         }}
         qrImage={qrImage}
         justPaid={searchParams.justPaid === "1"}

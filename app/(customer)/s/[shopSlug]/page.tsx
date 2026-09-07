@@ -4,7 +4,7 @@ import { ShopHeader } from "@/components/customer/ShopHeader";
 import { ShopMenu } from "@/components/customer/ShopMenu";
 import { ShopThemeProvider } from "@/components/customer/ShopThemeProvider";
 import { StorefrontSections } from "@/components/customer/StorefrontSections";
-import { ReviewList } from "@/components/customer/ReviewList";
+import { ShopTabs } from "@/components/customer/ShopTabs";
 import { defaultSectionsConfig } from "@/lib/storefront/theme";
 import { safeJsonParse } from "@/lib/utils";
 
@@ -76,29 +76,34 @@ export default async function ShopPage({
           bannerText={shop.bannerText}
           bannerCta={shop.bannerCta}
         />
-        <StorefrontSections
-          sectionsConfigJson={sectionsConfigJson}
-          shopSlug={shop.slug}
-          description={shop.description}
-          featuredProducts={featuredProducts}
-          activePromotions={activePromotions}
-          openingHours={openingHours}
-          address={shop.address}
-        />
-        <ShopMenu
+        <ShopTabs
           shopId={shop.id}
           shopName={shop.name}
-          shopSlug={shop.slug}
-          categories={shop.categories}
-          initialTab={searchParams.tab}
-          supportsDelivery={shop.supportsDelivery}
-          supportsPickup={shop.supportsPickup}
-          dineInTable={dineInTable}
-          dineInQrToken={dineInTable ? searchParams.qr! : undefined}
-        />
-        <div className="px-4 sm:px-6">
-          <ReviewList shopId={shop.id} shopName={shop.name} />
-        </div>
+          description={shop.description}
+          address={shop.address}
+          openingHours={openingHours}
+        >
+          <StorefrontSections
+            sectionsConfigJson={sectionsConfigJson}
+            shopSlug={shop.slug}
+            description={shop.description}
+            featuredProducts={featuredProducts}
+            activePromotions={activePromotions}
+            openingHours={openingHours}
+            address={shop.address}
+          />
+          <ShopMenu
+            shopId={shop.id}
+            shopName={shop.name}
+            shopSlug={shop.slug}
+            categories={shop.categories}
+            initialTab={searchParams.tab}
+            supportsDelivery={shop.supportsDelivery}
+            supportsPickup={shop.supportsPickup}
+            dineInTable={dineInTable}
+            dineInQrToken={dineInTable ? searchParams.qr! : undefined}
+          />
+        </ShopTabs>
       </main>
     </ShopThemeProvider>
   );

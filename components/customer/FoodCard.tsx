@@ -1,6 +1,7 @@
 "use client";
 
 import { Plus } from "lucide-react";
+import { FoodThumb } from "./FoodThumb";
 import { formatMoney } from "@/lib/utils";
 import { cn } from "@/lib/utils";
 
@@ -31,13 +32,8 @@ export function FoodCard({
         unavailable && "opacity-50"
       )}
     >
-      <div className="h-16 w-16 shrink-0 overflow-hidden rounded-lg bg-muted">
-        {product.imageUrl ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img src={product.imageUrl} alt={product.name} className="h-full w-full object-cover" />
-        ) : (
-          <div className="flex h-full w-full items-center justify-center text-xl">🍲</div>
-        )}
+      <div className="h-[4.5rem] w-[4.5rem] shrink-0 overflow-hidden rounded-xl">
+        <FoodThumb src={product.imageUrl} label={product.name} rounded="rounded-xl" glyphClassName="text-2xl" />
       </div>
       <div className="min-w-0 flex-1">
         <p className="truncate font-medium text-foreground">{product.name}</p>
