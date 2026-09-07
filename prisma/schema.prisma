@@ -1,0 +1,472 @@
+// Local Food Hub — QR-first multi-vendor food marketplace.
+// SQLite for local dev; swap `datasource.provider`/DATABASE_URL for Postgres later,
+// nothing else in the app depends on the storage engine.
+//
+// NOTE: SQLite's Prisma connector doesn't support native enums, so every "enum" below
+// is a plain String column. The authoritative value lists live in TS as const arrays +
+// zod enums (lib/constants.ts) — read those before touching any status field. This also
+// happens to satisfy spec Section 78 ("centralized status constants") directly.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// ───────────────────────── Users & roles ─────────────────────────
+// Role: SUPER_ADMIN | ADMIN | SHOP_OWNER | SHOP_STAFF | KITCHEN_STAFF | DELIVERY_STAFF | CUSTOMER
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  passwordHash String
+  name         String
+  phone        String?
+  role         String   @default("CUSTOMER")
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  shopStaff     ShopStaff[]
+  orders        Order[]
+  addresses     Address[]
+  favorites     Favorite[]
+  reviews       Review[]
+  notifications Notification[]
+  auditLogs     AuditLog[]
+}
+
+// ───────────────────────── Locations & shops ─────────────────────────
+
+// A named local zone (e.g. "Riverside Food Court") that groups shops for
+// discovery and LOCATION-type QR codes.
+model Location {
+  id          String  @id @default(cuid())
+  name        String
+  slug        String  @unique
+  description String?
+
+  shops   Shop[]
+  qrCodes QRCode[]
+
+  createdAt DateTime @default(now())
+}
+
+// Shop.status: PENDING | ACTIVE | SUSPENDED | CLOSED
+model Shop {
+  id               String  @id @default(cuid())
+  slug             String  @unique
+  name             String
+  category         String
+  description      String
+  logoUrl          String?
+  coverUrl         String?
+  address          String
+  phone            String?
+  email            String?
+  openingHours     String  @default("[]") // JSON: [{day, open, close}]
+  status           String  @default("PENDING")
+  supportsDelivery Boolean @default(true)
+  supportsPickup   Boolean @default(true)
+  supportsDineIn   Boolean @default(true)
+  deliveryFee      Float   @default(0)
+  minOrder         Float   @default(0)
+  prepTimeMinutes  Int     @default(15)
+  rating           Float   @default(0)
+  ratingCount      Int     @default(0)
+
+  locationId String?
+  location   Location? @relation(fields: [locationId], references: [id])
+
+  staff      ShopStaff[]
+  categories Category[]
+  products   Product[]
+  tables     Table[]
+  orders     Order[]
+  qrCodes    QRCode[]
+  promotions Promotion[]
+  reviews    Review[]
+  favorites  Favorite[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// ShopStaff.role: SHOP_OWNER | SHOP_STAFF | KITCHEN_STAFF
+model ShopStaff {
+  id     String @id @default(cuid())
+  shopId String
+  shop   Shop   @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role   String
+
+  createdAt DateTime @default(now())
+
+  @@unique([shopId, userId])
+}
+
+// ───────────────────────── Menu ─────────────────────────
+
+model Category {
+  id        String @id @default(cuid())
+  shopId    String
+  shop      Shop   @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  name      String
+  sortOrder Int    @default(0)
+
+  products Product[]
+}
+
+// Product.status: AVAILABLE | SOLD_OUT | HIDDEN
+model Product {
+  id              String  @id @default(cuid())
+  shopId          String
+  shop            Shop    @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  categoryId      String
+  category        Category @relation(fields: [categoryId], references: [id])
+  name            String
+  description     String
+  price           Float
+  discountPrice   Float?
+  imageUrl        String?
+  status          String  @default("AVAILABLE")
+  prepTimeMinutes Int     @default(10)
+  ingredients     String  @default("[]") // JSON string[]
+  allergens       String  @default("[]") // JSON string[]
+  dietaryTags     String  @default("[]") // JSON string[] e.g. ["vegetarian","halal","spicy"]
+  sortOrder       Int     @default(0)
+
+  options    ProductOption[]
+  addons     ProductAddon[]
+  orderItems OrderItem[]
+  favorites  Favorite[]
+  qrCodes    QRCode[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// e.g. "Size" -> Small/Medium/Large
+model ProductOption {
+  id        String  @id @default(cuid())
+  productId String
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  name      String
+  values    ProductOptionValue[]
+}
+
+model ProductOptionValue {
+  id         String        @id @default(cuid())
+  optionId   String
+  option     ProductOption @relation(fields: [optionId], references: [id], onDelete: Cascade)
+  label      String
+  priceDelta Float         @default(0)
+}
+
+// e.g. "Extra cheese" (+30)
+model ProductAddon {
+  id        String  @id @default(cuid())
+  productId String
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  name      String
+  price     Float   @default(0)
+}
+
+// Cross-device cart persistence. Schema exists per spec Section 33; this pass's cart
+// implementation is client-side (Zustand + localStorage, see lib/cart/store.ts) for speed
+// and guest-friendliness — these tables are not read/written yet, intentionally deferred.
+model Cart {
+  id        String     @id @default(cuid())
+  userId    String     @unique
+  shopId    String?
+  items     CartItem[]
+  updatedAt DateTime   @updatedAt
+}
+
+model CartItem {
+  id              String  @id @default(cuid())
+  cartId          String
+  cart            Cart    @relation(fields: [cartId], references: [id], onDelete: Cascade)
+  productId       String
+  quantity        Int
+  selectedOptions String  @default("[]")
+  selectedAddons  String  @default("[]")
+  notes           String?
+}
+
+// ───────────────────────── Tables (dine-in) ─────────────────────────
+// Table.status: AVAILABLE | OCCUPIED | ORDERING | PREPARING | READY | CLEANING
+
+model Table {
+  id     String @id @default(cuid())
+  shopId String
+  shop   Shop   @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  area   String @default("Main") // e.g. "Dining Area A"
+  label  String // e.g. "A01"
+  status String @default("AVAILABLE")
+
+  qrCodes QRCode[]
+  orders  Order[]
+
+  createdAt DateTime @default(now())
+
+  @@unique([shopId, area, label])
+}
+
+// ───────────────────────── QR system ─────────────────────────
+// QRCode.type: SHOP | MENU | TABLE | COUNTER | PRODUCT | ORDER | PICKUP | DELIVERY | PROMOTION | LOCATION | REGISTRATION
+// QRCode.status: ACTIVE | INACTIVE | EXPIRED | REVOKED
+
+model QRCode {
+  id     String @id @default(cuid())
+  token  String @unique
+  type   String
+  status String @default("ACTIVE")
+  label  String? // e.g. "Table A01", "Counter", "10% OFF"
+
+  shopId      String?
+  shop        Shop?      @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  tableId     String?
+  table       Table?     @relation(fields: [tableId], references: [id], onDelete: Cascade)
+  productId   String?
+  product     Product?   @relation(fields: [productId], references: [id], onDelete: Cascade)
+  orderId     String?    @unique
+  order       Order?     @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  locationId  String?
+  location    Location?  @relation(fields: [locationId], references: [id], onDelete: Cascade)
+  promotionId String?    @unique
+  promotion   Promotion? @relation(fields: [promotionId], references: [id], onDelete: Cascade)
+
+  scanCount     Int       @default(0)
+  orderCount    Int       @default(0)
+  lastScannedAt DateTime?
+  scans         QRScan[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// One row per scan, for basic conversion stats (scans -> orders).
+model QRScan {
+  id              String   @id @default(cuid())
+  qrCodeId        String
+  qrCode          QRCode   @relation(fields: [qrCodeId], references: [id], onDelete: Cascade)
+  scannedAt       DateTime @default(now())
+  resultedInOrder Boolean  @default(false)
+}
+
+// ───────────────────────── Orders ─────────────────────────
+// Order.orderType: DELIVERY | PICKUP | DINE_IN
+// Order.orderStatus: PENDING | PAYMENT_PENDING | CONFIRMED | ACCEPTED | PREPARING | READY |
+//                     ASSIGNED | PICKED_UP | ON_THE_WAY | DELIVERED | COMPLETED | CANCELLED | REFUNDED
+// Order.paymentStatus: PENDING | PROCESSING | PAID | FAILED | REFUNDED | CANCELLED
+
+model Order {
+  id             String @id @default(cuid())
+  orderNumber    String @unique // human-friendly e.g. "A10482"
+  idempotencyKey String @unique
+
+  customerId String?
+  customer   User?   @relation(fields: [customerId], references: [id])
+  guestName  String?
+  guestPhone String?
+
+  shopId String
+  shop   Shop   @relation(fields: [shopId], references: [id])
+
+  orderType String
+
+  tableId String?
+  table   Table?  @relation(fields: [tableId], references: [id])
+
+  deliveryAddressId String?
+  deliveryAddress   Address? @relation(fields: [deliveryAddressId], references: [id])
+
+  pickupTime   DateTime?
+  scheduledFor DateTime?
+
+  subtotal    Float
+  discount    Float @default(0)
+  deliveryFee Float @default(0)
+  serviceFee  Float @default(0)
+  tax         Float @default(0)
+  total       Float
+
+  promotionId String?
+  promotion   Promotion? @relation(fields: [promotionId], references: [id])
+
+  paymentStatus String @default("PENDING")
+  orderStatus   String @default("PENDING")
+  notes         String?
+
+  items    OrderItem[]
+  payment  Payment?
+  delivery Delivery?
+  review   Review?
+  qrCode   QRCode?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model OrderItem {
+  id              String  @id @default(cuid())
+  orderId         String
+  order           Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  productId       String
+  product         Product @relation(fields: [productId], references: [id])
+  name            String // snapshot
+  price           Float  // snapshot, incl. selected option/addon deltas
+  quantity        Int
+  selectedOptions String  @default("[]") // JSON [{optionName,valueLabel,priceDelta}]
+  selectedAddons  String  @default("[]") // JSON [{name,price}]
+  notes           String?
+}
+
+// ───────────────────────── Payments (provider-independent) ─────────────────────────
+// Payment.status / Transaction.status / Refund.status share the PaymentStatus value list above.
+
+model Payment {
+  id                   String @id @default(cuid())
+  orderId              String @unique
+  order                Order  @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  amount               Float
+  currency             String @default("BDT")
+  provider             String @default("mock")
+  status               String @default("PENDING")
+  transactionReference String?
+
+  transactions Transaction[]
+  refunds      Refund[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Transaction {
+  id          String   @id @default(cuid())
+  paymentId   String
+  payment     Payment  @relation(fields: [paymentId], references: [id], onDelete: Cascade)
+  type        String // CHARGE | REFUND
+  amount      Float
+  status      String
+  providerRef String?
+  createdAt   DateTime @default(now())
+}
+
+model Refund {
+  id        String   @id @default(cuid())
+  paymentId String
+  payment   Payment  @relation(fields: [paymentId], references: [id], onDelete: Cascade)
+  amount    Float
+  reason    String?
+  status    String   @default("PENDING")
+  createdAt DateTime @default(now())
+}
+
+// ───────────────────────── Delivery (schema-ready, UI deferred) ─────────────────────────
+// Delivery.status: ASSIGNED | ACCEPTED | AT_SHOP | PICKED_UP | ON_THE_WAY | DELIVERED | FAILED
+
+model Delivery {
+  id           String   @id @default(cuid())
+  orderId      String   @unique
+  order        Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  courierName  String?
+  courierPhone String?
+  status       String   @default("ASSIGNED")
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+// ───────────────────────── Addresses ─────────────────────────
+
+model Address {
+  id     String  @id @default(cuid())
+  userId String?
+  user   User?   @relation(fields: [userId], references: [id])
+  label  String  @default("Home")
+  line1  String
+  line2  String?
+  city   String
+  notes  String?
+
+  orders Order[]
+
+  createdAt DateTime @default(now())
+}
+
+// ───────────────────────── Favorites, reviews, promos, notifications, audit (light/deferred UI) ─────────────────────────
+
+model Favorite {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  shopId    String?
+  shop      Shop?    @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  productId String?
+  product   Product? @relation(fields: [productId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@unique([userId, shopId, productId])
+}
+
+model Review {
+  id             String   @id @default(cuid())
+  orderId        String   @unique
+  order          Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  shopId         String
+  shop           Shop     @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  userId         String
+  user           User     @relation(fields: [userId], references: [id])
+  overallRating  Int
+  foodRating     Int?
+  serviceRating  Int?
+  comment        String?
+  vendorResponse String?
+  createdAt      DateTime @default(now())
+}
+
+// Promotion.type: PERCENT | FIXED | BOGO | FREE_ITEM
+model Promotion {
+  id       String  @id @default(cuid())
+  shopId   String
+  shop     Shop    @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  code     String? @unique
+  title    String
+  type     String
+  value    Float
+  active   Boolean @default(true)
+  startsAt DateTime?
+  endsAt   DateTime?
+
+  orders Order[]
+  qrCode QRCode?
+
+  createdAt DateTime @default(now())
+}
+
+model Notification {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type      String
+  title     String
+  body      String
+  read      Boolean  @default(false)
+  createdAt DateTime @default(now())
+}
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  userId    String?
+  user      User?    @relation(fields: [userId], references: [id])
+  action    String // e.g. "SHOP_APPROVED", "QR_DISABLED", "ORDER_CANCELLED"
+  entity    String // e.g. "Shop", "QRCode"
+  entityId  String
+  before    String? // JSON
+  after     String? // JSON
+  createdAt DateTime @default(now())
+}

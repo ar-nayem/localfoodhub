@@ -1,0 +1,55 @@
+{
+  "name": "localfoodhub",
+  "version": "0.1.0",
+  "private": true,
+  "prisma": {
+    "seed": "tsx prisma/seed.ts"
+  },
+  "scripts": {
+    "dev": "next dev -p 4410",
+    "build": "NODE_OPTIONS=--max-old-space-size=1400 next build",
+    "start": "next start -p ${PORT:-4410}",
+    "lint": "next lint",
+    "db:push": "prisma db push",
+    "db:seed": "prisma db seed",
+    "db:reset": "prisma db push --force-reset && prisma db seed"
+  },
+  "dependencies": {
+    "next": "14.2.35",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "@prisma/client": "^5.19.1",
+    "prisma": "^5.19.1",
+    "bcryptjs": "^2.4.3",
+    "jose": "^5.9.3",
+    "zod": "^3.23.8",
+    "qrcode": "^1.5.3",
+    "jsqr": "^1.4.0",
+    "uuid": "^9.0.1",
+    "zustand": "^4.5.5",
+    "clsx": "^2.1.1",
+    "tailwind-merge": "^2.5.2",
+    "lucide-react": "^0.441.0",
+    "@radix-ui/react-dialog": "^1.1.1",
+    "@radix-ui/react-tabs": "^1.1.0",
+    "@radix-ui/react-dropdown-menu": "^2.1.1",
+    "@radix-ui/react-toast": "^1.2.1",
+    "@radix-ui/react-select": "^2.1.1",
+    "@radix-ui/react-switch": "^1.1.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.5.4",
+    "@types/node": "^20.14.15",
+    "@types/react": "^18.3.3",
+    "@types/react-dom": "^18.3.0",
+    "@types/qrcode": "^1.5.5",
+    "@types/uuid": "^9.0.8",
+    "@types/bcryptjs": "^2.4.6",
+    "tailwindcss": "^3.4.7",
+    "postcss": "^8.4.41",
+    "autoprefixer": "^10.4.19",
+    "tsx": "^4.19.0",
+    "eslint": "^8.57.0",
+    "eslint-config-next": "14.2.35"
+  }
+}

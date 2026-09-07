@@ -1,0 +1,44 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  /* Original neutral palette — warm terracotta primary, deep charcoal secondary.
+     Deliberately not Bolt's green. Swap these once the real brand arrives; nothing in
+     the app hard-codes a color outside this block. */
+  --background: 30 20% 98%;
+  --surface: 0 0% 100%;
+  --foreground: 20 15% 12%;
+  --muted: 30 12% 94%;
+  --muted-foreground: 30 8% 42%;
+  --border: 30 12% 88%;
+
+  --primary: 14 80% 52%;
+  --primary-foreground: 0 0% 100%;
+  --secondary: 215 28% 17%;
+  --secondary-foreground: 0 0% 100%;
+
+  --success: 142 60% 36%;
+  --warning: 38 92% 50%;
+  --error: 4 72% 51%;
+  --info: 210 80% 52%;
+
+  --radius: 16px;
+  --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, Roboto, sans-serif;
+}
+
+html {
+  -webkit-tap-highlight-color: transparent;
+}
+
+body {
+  background-color: hsl(var(--background));
+  color: hsl(var(--foreground));
+}
+
+.line-clamp-2 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
