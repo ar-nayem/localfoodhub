@@ -55,7 +55,8 @@ export function AdminChrome({ children }: { children: React.ReactNode }) {
         </button>
       </aside>
 
-      <div className="flex-1 bg-background">
+      {/* min-w-0 so the scrolling mobile nav can't widen this column past the screen. */}
+      <div className="min-w-0 flex-1 bg-background">
         <header className="flex items-center justify-between border-b border-border bg-surface px-4 py-3 sm:hidden">
           <Logo iconOnly />
           <button onClick={logout} className="text-sm text-error">

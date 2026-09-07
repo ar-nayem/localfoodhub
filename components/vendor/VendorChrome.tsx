@@ -77,7 +77,10 @@ export function VendorChrome({ children, role }: { children: React.ReactNode; ro
         </button>
       </aside>
 
-      <div className="flex-1">
+      {/* min-w-0 is load-bearing: a flex child defaults to min-width:auto, so the
+          horizontally scrolling nav below would otherwise widen this whole column to its
+          content width and push every page's content off the side of a phone screen. */}
+      <div className="min-w-0 flex-1">
         <header className="flex items-center justify-between border-b border-border bg-surface px-4 py-3 sm:hidden">
           <Logo iconOnly />
           <button onClick={logout} className="text-sm text-error">
