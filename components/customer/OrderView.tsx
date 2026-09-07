@@ -5,7 +5,7 @@ import { CheckCircle2, MapPin, Clock, ShieldCheck, type LucideIcon } from "lucid
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
 import { formatMoney } from "@/lib/utils";
-import { ORDER_STATUS_FLOW, ORDER_STATUS_LABEL, isCancellable, type OrderType } from "@/lib/constants";
+import { ORDER_STATUS_FLOW, ORDER_STATUS_LABEL, NEXT_ORDER_ACTION, isCancellable, type OrderType } from "@/lib/constants";
 import { toast } from "@/components/ui/Toast";
 import { OrderReviewSection } from "./OrderReviewSection";
 import { CancelOrderDialog } from "./CancelOrderDialog";
@@ -103,17 +103,24 @@ export function OrderView({
     }
   }
 
-  async function markCollected() {
+  // Scanning an order's QR advances it exactly one step through its own status flow —
+  // e.g. a newly-placed order goes to "Shop accepted", not straight to Completed. Staff
+  // scan again later (or use the Kanban board) to move it through Preparing, Ready, and
+  // finally Completed, same as any other order.
+  const nextAction = NEXT_ORDER_ACTION[order.orderStatus];
+
+  async function advanceStatus() {
+    if (!nextAction) return;
     setVerifying(true);
     try {
       const res = await fetch(`/api/orders/${order.id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ status: "COMPLETED" }),
+        body: JSON.stringify({ status: nextAction.next }),
       });
       if (!res.ok) throw new Error("Could not update order");
       setOrder(await res.json());
-      toast("Order marked collected", "success");
+      toast(`Order marked ${ORDER_STATUS_LABEL[nextAction.next]?.toLowerCase() ?? "updated"}`, "success");
     } catch {
       toast("Could not update order", "error");
     } finally {
@@ -131,12 +138,16 @@ export function OrderView({
           <p className="mt-1 text-sm text-muted-foreground">
             Payment: <strong>{order.paymentStatus}</strong> · Status: <strong>{order.orderStatus}</strong>
           </p>
-          {order.orderStatus !== "COMPLETED" ? (
-            <Button onClick={markCollected} disabled={verifying} className="mt-3 w-full">
-              {verifying ? "Marking..." : "Mark Collected"}
+          {nextAction ? (
+            <Button onClick={advanceStatus} disabled={verifying} className="mt-3 w-full">
+              {verifying ? "Updating..." : nextAction.label}
             </Button>
-          ) : (
+          ) : order.orderStatus === "COMPLETED" ? (
             <p className="mt-2 text-sm font-medium text-success">Verified & collected</p>
+          ) : (
+            <p className="mt-2 text-sm text-muted-foreground">
+              No further action available for this order&apos;s current status.
+            </p>
           )}
         </div>
       )}

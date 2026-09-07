@@ -141,6 +141,19 @@ export const ORDER_STATUS_LABEL: Record<string, string> = {
   REFUNDED: "Refunded",
 };
 
+/** The staff action that advances an order exactly one step forward through its own
+ * status flow — shared by the vendor Kanban board and the QR staff-verification panel
+ * so scanning an order's QR moves it to "Shop accepted" like any other acceptance, never
+ * straight to Completed. Absent from this map = no forward action offered (order is
+ * already at a terminal or unreachable-from-here status). */
+export const NEXT_ORDER_ACTION: Record<string, { next: string; label: string }> = {
+  PENDING: { next: "ACCEPTED", label: "Accept Order" },
+  CONFIRMED: { next: "ACCEPTED", label: "Accept Order" },
+  ACCEPTED: { next: "PREPARING", label: "Start Preparing" },
+  PREPARING: { next: "READY", label: "Mark Ready" },
+  READY: { next: "COMPLETED", label: "Mark Collected" },
+};
+
 export const PAYMENT_STATUSES = [
   "PENDING",
   "PROCESSING",
