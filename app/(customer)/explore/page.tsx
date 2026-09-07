@@ -6,13 +6,14 @@ import { SearchBar } from "@/components/customer/SearchBar";
 import { ShopCard, type ShopCardData } from "@/components/customer/ShopCard";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { cn } from "@/lib/utils";
+import { isOrderTypeActive } from "@/lib/constants";
 
 const MODE_FILTERS = [
   { value: "", label: "All" },
-  { value: "delivery", label: "Delivery" },
+  { value: "delivery", label: "Delivery", mode: "DELIVERY" },
   { value: "pickup", label: "Pickup" },
   { value: "dine-in", label: "Dine-in" },
-];
+].filter((f) => isOrderTypeActive((f as { mode?: string }).mode ?? ""));
 
 export default function ExplorePage() {
   return (

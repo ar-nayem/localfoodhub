@@ -2,18 +2,17 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, QrCode, ClipboardList, User, ShoppingBag, Heart, MapPin, ChevronDown } from "lucide-react";
+import { Home, QrCode, ClipboardList, User, ShoppingBag, Heart, MapPin, ChevronDown, Search } from "lucide-react";
 import { Logo } from "@/components/brand/Logo";
 import { useCartStore } from "@/lib/cart/store";
 import { cn } from "@/lib/utils";
 import { NotificationBell } from "./NotificationBell";
 
-// Bottom navigation. The second slot is the QR scanner rather than Explore — scanning is
-// the primary way into this marketplace, and Explore stays one tap away from the home
-// screen's discovery card.
+// Bottom navigation. The scanner is not here — it lives at the top left of the mobile
+// header, where it must stay.
 const MOBILE_NAV = [
   { href: "/", label: "Home", icon: Home },
-  { href: "/scan", label: "Scan", icon: QrCode },
+  { href: "/explore", label: "Explore", icon: Search },
   { href: "/orders", label: "Orders", icon: ClipboardList },
   { href: "/favorites", label: "Favorites", icon: Heart },
   { href: "/profile", label: "Profile", icon: User },
@@ -69,18 +68,28 @@ export function CustomerChrome({ children }: { children: React.ReactNode }) {
       {showMobileHeader && (
         <header className="sticky top-0 z-30 bg-background/95 px-4 pb-2 pt-3 backdrop-blur sm:hidden">
           <div className="flex items-center justify-between">
-            <Link href="/explore" className="flex items-center gap-2 text-left">
+            <div className="flex min-w-0 items-center gap-2">
+              {/* Scanner — top left. */}
+              <Link
+                href="/scan"
+                aria-label="Scan QR code"
+                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground"
+              >
+                <QrCode size={18} />
+              </Link>
+              <Link href="/explore" className="flex min-w-0 items-center gap-2 text-left">
               <span className="flex h-9 w-9 items-center justify-center rounded-full bg-primary/10 text-primary">
                 <MapPin size={17} />
               </span>
               <span className="leading-tight">
                 <span className="block text-[11px] text-muted-foreground">Your Location</span>
-                <span className="flex items-center gap-1 text-sm font-semibold">
+                <span className="flex items-center gap-1 truncate text-sm font-semibold">
                   Riverside Food Court
-                  <ChevronDown size={14} className="text-muted-foreground" />
+                  <ChevronDown size={14} className="shrink-0 text-muted-foreground" />
                 </span>
               </span>
-            </Link>
+              </Link>
+            </div>
             <div className="flex items-center gap-1.5">
               <Link
                 href="/cart"

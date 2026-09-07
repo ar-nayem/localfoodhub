@@ -50,6 +50,27 @@ export type QRStatus = (typeof QR_STATUSES)[number];
 export const ORDER_TYPES = ["DELIVERY", "PICKUP", "DINE_IN"] as const;
 export type OrderType = (typeof ORDER_TYPES)[number];
 
+/**
+ * Launch feature flags.
+ *
+ * Delivery is off for this launch. The flag hides it from every customer- and
+ * vendor-facing surface while leaving the schema, order type, status flow, courier model
+ * and existing delivery orders completely intact — flip this back to `true` to restore it
+ * without a migration or a rebuild.
+ */
+export const FEATURES = {
+  delivery: false,
+} as const;
+
+/** Order types currently offered to customers. */
+export const ACTIVE_ORDER_TYPES = ORDER_TYPES.filter(
+  (t) => t !== "DELIVERY" || FEATURES.delivery
+);
+
+export function isOrderTypeActive(type: string): boolean {
+  return type !== "DELIVERY" || FEATURES.delivery;
+}
+
 // Ordered progression per order type — used to render tracking timelines and to
 // validate a vendor's "move forward" action never skips or reverses illegally.
 export const ORDER_STATUS_FLOW: Record<OrderType, string[]> = {

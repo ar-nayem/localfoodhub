@@ -3,6 +3,7 @@ import { FoodThumb } from "./FoodThumb";
 import { FavoriteHeart } from "./FavoriteHeart";
 import { BackButton } from "./BackButton";
 import { cn } from "@/lib/utils";
+import { isOrderTypeActive } from "@/lib/constants";
 
 const DAYS = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
 
@@ -63,7 +64,7 @@ export function ShopHeader({
   const prep = shop.prepTimeMinutes;
 
   const modes = [
-    shop.supportsDelivery && {
+    shop.supportsDelivery && isOrderTypeActive("DELIVERY") && {
       icon: Truck,
       label: "Delivery",
       detail: `${prep + 10}-${prep + 20} min`,

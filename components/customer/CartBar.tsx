@@ -5,6 +5,7 @@ import Link from "next/link";
 import { ShoppingBag } from "lucide-react";
 import { useCartStore } from "@/lib/cart/store";
 import { formatMoney } from "@/lib/utils";
+import { ACTIVE_ORDER_TYPES } from "@/lib/constants";
 
 // The cart page and checkout have their own totals bar; product detail has its own
 // add-to-cart bar. Everywhere else, this is the shortcut straight to payment.
@@ -30,9 +31,9 @@ export function CartBar() {
   if (HIDDEN_ON.some((p) => pathname.startsWith(p))) return null;
 
   function checkout() {
-    // Checkout needs a mode; default to delivery so a customer who never touched the
-    // mode switch still gets there, and they can still change it on the checkout page.
-    if (!orderMode) setOrderContext({ orderMode: "DELIVERY" });
+    // Checkout needs a mode; default to the first order type still offered so a customer
+    // who never touched the switch still gets there, and can change it at checkout.
+    if (!orderMode) setOrderContext({ orderMode: ACTIVE_ORDER_TYPES[0] as "PICKUP" | "DINE_IN" });
     router.push("/checkout");
   }
 

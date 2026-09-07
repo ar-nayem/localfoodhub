@@ -7,17 +7,19 @@ import { ShopCard } from "@/components/customer/ShopCard";
 import { FoodThumb } from "@/components/customer/FoodThumb";
 import { Button } from "@/components/ui/Button";
 import { formatMoney } from "@/lib/utils";
+import { isOrderTypeActive } from "@/lib/constants";
 
 export const dynamic = "force-dynamic";
 
 // The quick-access row. Every tile goes somewhere real — no placeholder collections.
 const QUICK_TILES = [
   { href: "/explore", label: "Food", icon: Utensils, tint: "bg-[#FDF1DF] text-[#C9772A]" },
-  { href: "/explore?mode=delivery", label: "Delivery", icon: Truck, tint: "bg-[#E4F1E6] text-primary" },
+  // Delivery tile is gated on FEATURES.delivery — hidden for this launch.
+  { href: "/explore?mode=delivery", label: "Delivery", icon: Truck, tint: "bg-[#E4F1E6] text-primary", mode: "DELIVERY" },
   { href: "/explore?mode=dine-in", label: "Dine-in", icon: UtensilsCrossed, tint: "bg-[#FCE9E4] text-[#C0562F]" },
   { href: "/explore?mode=pickup", label: "Takeaway", icon: ShoppingBag, tint: "bg-[#E7EEF9] text-[#3A6EA5]" },
   { href: "/explore?deals=1", label: "Offers", icon: Tag, tint: "bg-[#FBE4E8] text-[#C2415C]" },
-];
+].filter((t) => isOrderTypeActive(t.mode ?? ""));
 
 export default async function HomePage() {
   const [shops, categories, picks] = await Promise.all([
@@ -211,7 +213,7 @@ export default async function HomePage() {
         <div className="min-w-0 flex-1">
           <h2 className="text-base font-bold">Scan to Order</h2>
           <p className="mt-0.5 text-sm text-muted-foreground">
-            Dine-in, takeaway or delivery — scan a {brand.name} code to jump straight in.
+            Dine-in or takeaway — scan a {brand.name} code to jump straight in.
           </p>
         </div>
         <Link

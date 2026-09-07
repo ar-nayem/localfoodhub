@@ -1,5 +1,7 @@
 "use client";
 
+import { isOrderTypeActive } from "@/lib/constants";
+
 import { useEffect, useState } from "react";
 import { useVendorShop } from "@/lib/vendor/useVendorShop";
 import { Button } from "@/components/ui/Button";
@@ -74,20 +76,24 @@ export default function VendorSettingsPage() {
 
         <div className="rounded-2xl border border-border bg-surface p-4">
           <h2 className="mb-3 text-sm font-semibold">Order modes</h2>
-          <ToggleRow label="Delivery" checked={!!form.supportsDelivery} onChange={(v) => setForm({ ...form, supportsDelivery: v })} />
+          {isOrderTypeActive("DELIVERY") && (
+            <ToggleRow label="Delivery" checked={!!form.supportsDelivery} onChange={(v) => setForm({ ...form, supportsDelivery: v })} />
+          )}
           <ToggleRow label="Pickup" checked={!!form.supportsPickup} onChange={(v) => setForm({ ...form, supportsPickup: v })} />
           <ToggleRow label="Dine-in" checked={!!form.supportsDineIn} onChange={(v) => setForm({ ...form, supportsDineIn: v })} />
         </div>
 
         <div className="flex gap-3">
-          <div className="flex-1">
-            <Label>Delivery fee (৳)</Label>
-            <Input
-              type="number"
-              value={String(form.deliveryFee ?? 0)}
-              onChange={(e) => setForm({ ...form, deliveryFee: Number(e.target.value) })}
-            />
-          </div>
+          {isOrderTypeActive("DELIVERY") && (
+            <div className="flex-1">
+              <Label>Delivery fee (৳)</Label>
+              <Input
+                type="number"
+                value={String(form.deliveryFee ?? 0)}
+                onChange={(e) => setForm({ ...form, deliveryFee: Number(e.target.value) })}
+              />
+            </div>
+          )}
           <div className="flex-1">
             <Label>Min order (৳)</Label>
             <Input

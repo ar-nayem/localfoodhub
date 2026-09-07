@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { ChevronLeft, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { cn, formatMoney } from "@/lib/utils";
-import { PRICE_BUCKETS, MOOD_TAGS } from "@/lib/constants";
+import { PRICE_BUCKETS, MOOD_TAGS, isOrderTypeActive } from "@/lib/constants";
 import { useCartStore } from "@/lib/cart/store";
 import { ExploreResultCard, type Recommendation } from "./ExploreResultCard";
 
@@ -17,10 +17,11 @@ const PEOPLE_OPTIONS = [
 ];
 
 const MODE_OPTIONS = [
-  { key: "delivery", label: "Delivery", sub: "I'll eat at home", icon: "🚴" },
+  // Delivery is hidden while FEATURES.delivery is off.
+  { key: "delivery", label: "Delivery", sub: "I'll eat at home", icon: "🚴", orderType: "DELIVERY" },
   { key: "pickup", label: "Pickup", sub: "I'll collect it", icon: "🥡" },
   { key: "dine-in", label: "Dine-in", sub: "I'm already out", icon: "🍽️" },
-];
+].filter((m) => isOrderTypeActive((m as { orderType?: string }).orderType ?? ""));
 
 const MOOD_ICON: Record<string, string> = {
   spicy: "🌶️",

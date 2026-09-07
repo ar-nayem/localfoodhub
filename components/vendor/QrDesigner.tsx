@@ -29,7 +29,7 @@ const TYPES = [
   { value: "PRODUCT", label: "Food item", needs: "product" },
   { value: "ORDER", label: "Order", needs: "order" },
   { value: "PICKUP", label: "Pickup", needs: "order" },
-  { value: "DELIVERY", label: "Delivery", needs: "order" },
+  // Delivery QR is hidden while delivery is off; the templates remain registered.
   { value: "EXPLORE", label: "Explore", needs: null },
 ] as const;
 

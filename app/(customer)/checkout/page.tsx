@@ -7,6 +7,7 @@ import { useCartStore } from "@/lib/cart/store";
 import { Button } from "@/components/ui/Button";
 import { Input, Label, Textarea } from "@/components/ui/Input";
 import { BackButton } from "@/components/customer/BackButton";
+import { isOrderTypeActive } from "@/lib/constants";
 import { formatMoney, cn } from "@/lib/utils";
 import { toast } from "@/components/ui/Toast";
 
@@ -37,11 +38,20 @@ export default function CheckoutPage() {
     if (cart.items.length === 0 && !orderPlaced) router.replace("/cart");
   }, [cart.items.length, orderPlaced, router]);
 
+  // Delivery is disabled for this launch; move any cart still carrying it to pickup so
+  // checkout can't be stuck on an order type the customer can no longer see.
+  useEffect(() => {
+    if (cart.orderMode === "DELIVERY" && !isOrderTypeActive("DELIVERY")) {
+      cart.setOrderContext({ orderMode: "PICKUP" });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [cart.orderMode]);
+
   const canSelectMode = cart.orderMode !== "DINE_IN";
 
   async function placeOrder() {
     if (!cart.shopId || !cart.orderMode) {
-      setError("Choose delivery or pickup before checking out.");
+      setError("Choose how you want your order before checking out.");
       return;
     }
     if (cart.orderMode === "DELIVERY" && (!addressLine1 || !city)) {
@@ -147,13 +157,15 @@ export default function CheckoutPage() {
           </div>
         ) : (
           <div className="flex gap-2">
-            <ModeButton
-              active={cart.orderMode === "DELIVERY"}
-              onClick={() => cart.setOrderContext({ orderMode: "DELIVERY" })}
-              icon={Truck}
-              label="Delivery"
-              disabled={!canSelectMode}
-            />
+            {isOrderTypeActive("DELIVERY") && (
+              <ModeButton
+                active={cart.orderMode === "DELIVERY"}
+                onClick={() => cart.setOrderContext({ orderMode: "DELIVERY" })}
+                icon={Truck}
+                label="Delivery"
+                disabled={!canSelectMode}
+              />
+            )}
             <ModeButton
               active={cart.orderMode === "PICKUP"}
               onClick={() => cart.setOrderContext({ orderMode: "PICKUP" })}

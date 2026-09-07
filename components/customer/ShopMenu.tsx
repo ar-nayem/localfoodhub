@@ -7,6 +7,7 @@ import { FoodCard, type FoodCardData } from "./FoodCard";
 import { useCartStore, cartLineKey } from "@/lib/cart/store";
 import { toast } from "@/components/ui/Toast";
 import { cn } from "@/lib/utils";
+import { isOrderTypeActive } from "@/lib/constants";
 
 interface Category {
   id: string;
@@ -77,9 +78,9 @@ export function ShopMenu({
 
   return (
     <div className="px-4 pt-4 sm:px-6">
-      {!dineInTable && (supportsDelivery || supportsPickup) && (
+      {!dineInTable && ((supportsDelivery && isOrderTypeActive("DELIVERY")) || supportsPickup) && (
         <div className="mb-4 flex gap-2">
-          {supportsDelivery && (
+          {supportsDelivery && isOrderTypeActive("DELIVERY") && (
             <button
               onClick={() => selectMode("DELIVERY")}
               className={cn(
