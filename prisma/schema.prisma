@@ -289,6 +289,13 @@ model QRCode {
   promotionId String?    @unique
   promotion   Promotion? @relation(fields: [promotionId], references: [id], onDelete: Cascade)
 
+  // Which design the card renders with. Purely presentational: changing it never changes
+  // `token`, so a printed code keeps working after a redesign.
+  templateId String?
+  // Vendor-chosen call-to-action override; falls back to the template/type default.
+  ctaOverride String?
+  expiresAt   DateTime?
+
   scanCount     Int       @default(0)
   orderCount    Int       @default(0)
   lastScannedAt DateTime?
@@ -493,8 +500,11 @@ model Review {
   product     Product   @relation(fields: [productId], references: [id], onDelete: Cascade)
   shopId      String
   shop        Shop      @relation(fields: [shopId], references: [id], onDelete: Cascade)
-  userId      String
-  user        User      @relation(fields: [userId], references: [id])
+  // Null for a guest order's review — the reviewer proved purchase by holding the
+  // order's own unguessable link, the same credential that lets them view the order.
+  userId      String?
+  user        User?     @relation(fields: [userId], references: [id])
+  reviewerName String?
 
   rating            Int
   comment           String?
@@ -615,4 +625,26 @@ model OrderStatusEvent {
   createdAt DateTime @default(now())
 
   @@index([orderId])
+}
+
+
+// Admin-managed state for a QR card design. The layout itself lives in code
+// (lib/qr/templates/registry.ts) because it is a rendering concern; this table holds the
+// parts an admin controls at runtime — availability, ordering, the default per QR type,
+// and an optional preview image. Rows are seeded from the registry on first read.
+model QRTemplate {
+  id         String  @id // matches the registry key, e.g. "table-classic"
+  name       String
+  type       String  // QR type this design belongs to
+  active     Boolean @default(true)
+  isDefault  Boolean @default(false)
+  sortOrder  Int     @default(0)
+  previewUrl String?
+  // Optional admin overrides merged over the registry config at render time (JSON).
+  overrides  String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([type, sortOrder])
 }

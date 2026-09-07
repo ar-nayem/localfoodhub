@@ -4,6 +4,7 @@ import { getSession } from "@/lib/auth";
 import { createReviewSchema } from "@/lib/validation/schemas";
 import { recalculateShopRating } from "@/lib/reviews/rollup";
 import { notificationService } from "@/lib/notifications/ConsoleProvider";
+import { canActOnOrder } from "@/lib/orders/access";
 
 // Public: reviews for a product or a shop, newest first by default (spec Section 228 —
 // full sort/filter set is deferred, "newest" and "highest/lowest" cover the common case).
@@ -49,7 +50,7 @@ export async function GET(req: NextRequest) {
       vendorResponse: r.vendorResponse,
       vendorRespondedAt: r.vendorRespondedAt,
       createdAt: r.createdAt,
-      customerName: displayName(r.user.name),
+      customerName: displayName(r.user?.name ?? r.reviewerName ?? "Guest"),
       productName: r.product.name,
       media: r.media,
     })),
@@ -63,7 +64,6 @@ export async function GET(req: NextRequest) {
 // same orderItemId edits the existing review instead of creating a duplicate (Section 216/241).
 export async function POST(req: NextRequest) {
   const session = await getSession();
-  if (!session) return NextResponse.json({ error: "Sign in to leave a review." }, { status: 401 });
 
   const body = await req.json().catch(() => null);
   const parsed = createReviewSchema.safeParse(body);
@@ -76,7 +76,7 @@ export async function POST(req: NextRequest) {
     where: { id: d.orderItemId },
     include: { order: true },
   });
-  if (!orderItem || orderItem.order.customerId !== session.userId) {
+  if (!orderItem || !canActOnOrder(orderItem.order, session)) {
     return NextResponse.json({ error: "Order item not found" }, { status: 404 });
   }
   if (orderItem.order.orderStatus !== "COMPLETED") {
@@ -97,7 +97,8 @@ export async function POST(req: NextRequest) {
             orderId: orderItem.orderId,
             productId: orderItem.productId,
             shopId: orderItem.order.shopId,
-            userId: session.userId,
+            userId: session?.userId ?? null,
+            reviewerName: session ? null : orderItem.order.guestName,
             rating: d.rating,
             comment: d.comment,
             tags: JSON.stringify(d.tags),

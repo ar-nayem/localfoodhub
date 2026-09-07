@@ -40,8 +40,11 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: parsed.error.issues[0]?.message ?? "Invalid order" }, { status: 400 });
   }
 
+  // Any signed-in user placing an order owns it — a shop owner or staff member ordering
+  // lunch is still the customer on that order. Restricting this to role CUSTOMER left
+  // their orders ownerless, which then blocked cancelling and reviewing them.
   const session = await getSession();
-  const customerId = session && session.role === "CUSTOMER" ? session.userId : null;
+  const customerId = session ? session.userId : null;
 
   try {
     const { order, alreadyExisted } = await createOrder(parsed.data, customerId);

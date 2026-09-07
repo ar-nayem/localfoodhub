@@ -56,6 +56,9 @@ export function ProductDetail({
   const [selectedAddons, setSelectedAddons] = useState<Addon[]>([]);
   const [quantity, setQuantity] = useState(1);
   const [notes, setNotes] = useState("");
+  // Once the item is in the cart, this page offers checkout directly rather than sending
+  // the customer back to browse and then into the cart.
+  const [justAdded, setJustAdded] = useState(false);
 
   const basePrice = product.discountPrice ?? product.price;
   const unitPrice = useMemo(() => {
@@ -94,10 +97,10 @@ export function ProductDetail({
     });
     // On a conflict, addItem sets the store's `conflict` state instead of adding — the
     // globally-mounted CartConflictDialog (app/(customer)/layout.tsx) takes over from
-    // here. Only treat this as success — toast + navigate away — when it actually added.
+    // here. Only treat this as success when it actually added.
     if (added) {
       toast(`Added ${quantity} × ${product.name}`, "success");
-      router.back();
+      setJustAdded(true);
     }
   }
 
@@ -259,14 +262,28 @@ export function ProductDetail({
               <Plus size={14} />
             </button>
           </div>
-          <Button
-            onClick={handleAdd}
-            disabled={unavailable || missingRequiredOption}
-            className="flex-1 rounded-full"
-            size="lg"
-          >
-            Add to Cart · {formatMoney(unitPrice * quantity)}
-          </Button>
+          {justAdded ? (
+            <div className="flex flex-1 gap-2">
+              <button
+                onClick={() => setJustAdded(false)}
+                className="rounded-full border border-border px-4 text-sm font-semibold"
+              >
+                Add more
+              </button>
+              <Button onClick={() => router.push("/checkout")} className="flex-1 rounded-full" size="lg">
+                Checkout
+              </Button>
+            </div>
+          ) : (
+            <Button
+              onClick={handleAdd}
+              disabled={unavailable || missingRequiredOption}
+              className="flex-1 rounded-full"
+              size="lg"
+            >
+              Add to Cart · {formatMoney(unitPrice * quantity)}
+            </Button>
+          )}
         </div>
       </div>
     </div>

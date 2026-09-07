@@ -121,7 +121,11 @@ export const generateQrSchema = z.object({
   tableId: z.string().optional(),
   productId: z.string().optional(),
   locationId: z.string().optional(),
+  orderId: z.string().optional(),
   label: z.string().max(80).optional(),
+  // Presentation only — never affects the token or destination.
+  templateId: z.string().max(64).optional(),
+  ctaOverride: z.string().max(40).optional(),
 });
 
 export const createReviewSchema = z.object({

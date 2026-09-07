@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { getSession, isAdminRole, isStaffRole } from "@/lib/auth";
 import { generateQrSchema } from "@/lib/validation/schemas";
 import { generateQrToken, qrPublicUrl } from "@/lib/qr/token";
+import { defaultTemplateId } from "@/lib/qr/templates/registry";
 
 // Staff (their own shop) or admin (any shop / platform-level types): list QR codes with
 // a ready-to-render PNG data URL and basic scan stats (spec Section 4's QR Management
@@ -63,6 +64,9 @@ export async function POST(req: NextRequest) {
       tableId: data.tableId,
       productId: data.productId,
       locationId: data.locationId,
+      orderId: data.orderId,
+      templateId: data.templateId ?? defaultTemplateId(data.type),
+      ctaOverride: data.ctaOverride,
     },
   });
 

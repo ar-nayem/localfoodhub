@@ -6,6 +6,8 @@ import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
 import { Switch } from "@/components/ui/Switch";
 import { QRCard } from "@/components/qr/QRCard";
+import { QrDesigner } from "@/components/vendor/QrDesigner";
+import { QrCardPreview } from "@/components/vendor/QrCardPreview";
 import { qrPurpose } from "@/lib/qr/presentation";
 import { brand, qrBrand } from "@/lib/brand";
 import { toast } from "@/components/ui/Toast";
@@ -37,6 +39,9 @@ export function QrCenter() {
   const [productId, setProductId] = useState("");
   const [generating, setGenerating] = useState(false);
   const [preview, setPreview] = useState<QrRow | null>(null);
+  const [designerOpen, setDesignerOpen] = useState(false);
+  const [tables, setTables] = useState<{ id: string; label: string }[]>([]);
+  const [orders, setOrders] = useState<{ id: string; label: string }[]>([]);
 
   async function load() {
     if (!shop) return;
@@ -46,6 +51,20 @@ export function QrCenter() {
     ]);
     setQrCodes(qr.filter((q: QrRow) => q.type !== "TABLE"));
     setProducts(prod);
+
+    // References the designer offers when creating a table/order-scoped code.
+    const [tbl, ord] = await Promise.all([
+      fetch(`/api/vendor/tables?shopId=${shop.id}`).then((r) => (r.ok ? r.json() : [])),
+      fetch(`/api/orders?shopId=${shop.id}`).then((r) => (r.ok ? r.json() : [])),
+    ]);
+    setTables(
+      (tbl as { id: string; label: string; area: string }[]).map((t) => ({ id: t.id, label: `${t.area} · ${t.label}` }))
+    );
+    setOrders(
+      (ord as { id: string; orderNumber: string; orderStatus: string }[])
+        .slice(0, 40)
+        .map((o) => ({ id: o.id, label: `#${o.orderNumber} · ${o.orderStatus}` }))
+    );
   }
 
   useEffect(() => {
@@ -155,6 +174,9 @@ export function QrCenter() {
         <Button onClick={generate} disabled={generating}>
           {generating ? "Generating..." : "Generate QR"}
         </Button>
+        <Button variant="outline" onClick={() => setDesignerOpen(true)}>
+          Design a card
+        </Button>
       </div>
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -213,20 +235,27 @@ export function QrCenter() {
       {qrCodes.length === 0 && <p className="text-muted-foreground">No QR codes yet — generate one above.</p>}
 
       {preview && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
-          onClick={() => setPreview(null)}
-        >
-          <div onClick={(e) => e.stopPropagation()}>
-            <QRCard
-              type={preview.type}
-              title={shop?.name ?? ""}
-              subtitle={preview.label ?? undefined}
-              imageDataUrl={preview.imageDataUrl}
-            />
-          </div>
-        </div>
+        <QrCardPreview
+          qrCodeId={preview.id}
+          filename={`${preview.type.toLowerCase()}-qr`}
+          onClose={() => setPreview(null)}
+        />
       )}
+
+      {designerOpen && shop && (
+        <QrDesigner
+          shopId={shop.id}
+          tables={tables}
+          products={products.map((p) => ({ id: p.id, label: p.name }))}
+          orders={orders}
+          onCreated={() => {
+            setDesignerOpen(false);
+            load();
+          }}
+          onClose={() => setDesignerOpen(false)}
+        />
+      )}
+
     </div>
   );
 }

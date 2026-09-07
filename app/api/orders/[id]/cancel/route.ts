@@ -4,6 +4,7 @@ import { getSession } from "@/lib/auth";
 import { paymentService } from "@/lib/payment/MockPaymentProvider";
 import { notificationService } from "@/lib/notifications/ConsoleProvider";
 import { CANCELLABLE_ORDER_STATUSES, isCancellable } from "@/lib/constants";
+import { canActOnOrder } from "@/lib/orders/access";
 
 /**
  * Customer-initiated cancellation. Only valid while the shop has not accepted the order
@@ -15,16 +16,13 @@ import { CANCELLABLE_ORDER_STATUSES, isCancellable } from "@/lib/constants";
  */
 export async function POST(req: NextRequest, { params }: { params: { id: string } }) {
   const session = await getSession();
-  if (!session) {
-    return NextResponse.json({ error: "Sign in to cancel this order." }, { status: 401 });
-  }
 
   const order = await prisma.order.findUnique({
     where: { id: params.id },
     include: { payment: true },
   });
   if (!order) return NextResponse.json({ error: "Order not found" }, { status: 404 });
-  if (order.customerId !== session.userId) {
+  if (!canActOnOrder(order, session)) {
     return NextResponse.json({ error: "Order not found" }, { status: 404 });
   }
   if (order.orderStatus === "CANCELLED") {
@@ -91,19 +89,23 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
     await prisma.table.update({ where: { id: order.tableId }, data: { status: "AVAILABLE" } });
   }
 
-  await notificationService.send({
-    userId: session.userId,
-    type: "ORDER_CANCELLED",
-    title: `Order #${order.orderNumber} cancelled`,
-    body:
-      refundState === "REFUNDED"
-        ? "Your order was cancelled and your refund has been completed."
-        : refundState === "PROCESSING"
-          ? "Your order was cancelled. Your refund is being processed."
-          : "Your order was cancelled successfully.",
-    orderId: order.id,
-    shopId: order.shopId,
-  });
+  // Guest orders have no account to notify — the confirmation page itself shows the
+  // cancelled state, which is the only channel a guest has.
+  if (order.customerId) {
+    await notificationService.send({
+      userId: order.customerId,
+      type: "ORDER_CANCELLED",
+      title: `Order #${order.orderNumber} cancelled`,
+      body:
+        refundState === "REFUNDED"
+          ? "Your order was cancelled and your refund has been completed."
+          : refundState === "PROCESSING"
+            ? "Your order was cancelled. Your refund is being processed."
+            : "Your order was cancelled successfully.",
+      orderId: order.id,
+      shopId: order.shopId,
+    });
+  }
 
   const full = await prisma.order.findUnique({
     where: { id: order.id },

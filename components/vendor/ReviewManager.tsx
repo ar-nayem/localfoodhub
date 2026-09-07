@@ -14,7 +14,8 @@ interface ReviewRow {
   comment: string | null;
   vendorResponse: string | null;
   createdAt: string;
-  user: { name: string };
+  user: { name: string } | null;
+  reviewerName: string | null;
   product: { name: string };
   media: { type: string; url: string }[];
 }
@@ -115,7 +116,7 @@ export function ReviewManager() {
           <div key={r.id} className="rounded-2xl border border-border bg-surface p-4">
             <div className="flex items-start justify-between">
               <div>
-                <p className="text-sm font-medium">{r.user.name}</p>
+                <p className="text-sm font-medium">{r.user?.name ?? r.reviewerName ?? "Guest"}</p>
                 <p className="text-xs text-muted-foreground">
                   {r.product.name} · {new Date(r.createdAt).toLocaleDateString()}
                 </p>

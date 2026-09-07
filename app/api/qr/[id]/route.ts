@@ -18,10 +18,24 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
 
   const body = await req.json().catch(() => null);
   const status: string | undefined = body?.status;
-  if (!status || !["ACTIVE", "INACTIVE", "REVOKED"].includes(status)) {
+  const templateId: string | undefined = body?.templateId;
+  const ctaOverride: string | undefined = body?.ctaOverride;
+
+  if (status && !["ACTIVE", "INACTIVE", "REVOKED", "EXPIRED"].includes(status)) {
     return NextResponse.json({ error: "Invalid status" }, { status: 400 });
   }
+  if (!status && templateId === undefined && ctaOverride === undefined) {
+    return NextResponse.json({ error: "Nothing to update" }, { status: 400 });
+  }
 
-  const updated = await prisma.qRCode.update({ where: { id: qr.id }, data: { status } });
+  // Restyling never touches `token`: a printed card keeps resolving to the same place.
+  const updated = await prisma.qRCode.update({
+    where: { id: qr.id },
+    data: {
+      ...(status ? { status } : {}),
+      ...(templateId !== undefined ? { templateId } : {}),
+      ...(ctaOverride !== undefined ? { ctaOverride: ctaOverride || null } : {}),
+    },
+  });
   return NextResponse.json(updated);
 }

@@ -45,8 +45,9 @@ export default async function HomePage() {
         </div>
       </section>
 
-      {/* Hero */}
-      <section className="mb-5">
+      {/* Hero — desktop only. The mobile home screen goes straight from search to the
+          quick-access row; the poster is not shown there. */}
+      <section className="mb-5 hidden sm:block">
         <div className="relative overflow-hidden rounded-3xl bg-secondary px-5 py-6 text-secondary-foreground sm:px-8 sm:py-10">
           <div
             aria-hidden
