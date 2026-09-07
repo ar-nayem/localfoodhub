@@ -1,9 +1,11 @@
 import Link from "next/link";
 import { Star, Clock } from "lucide-react";
 import { Badge } from "@/components/ui/Badge";
+import { FavoriteHeart } from "./FavoriteHeart";
 import { formatMoney } from "@/lib/utils";
 
 export interface ShopCardData {
+  id: string;
   slug: string;
   name: string;
   category: string;
@@ -46,6 +48,9 @@ export function ShopCard({ shop }: { shop: ShopCardData }) {
             </Badge>
           </div>
         )}
+        <div className="absolute right-2 top-2">
+          <FavoriteHeart shopId={shop.id} />
+        </div>
       </div>
       <div className="p-3.5">
         <div className="flex items-start justify-between gap-2">

@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/Button";
 import { Input, Label } from "@/components/ui/Input";
 import { Switch } from "@/components/ui/Switch";
 import { Badge } from "@/components/ui/Badge";
+import { MediaUploader } from "@/components/ui/MediaUploader";
 import { toast } from "@/components/ui/Toast";
 import { formatMoney } from "@/lib/utils";
 
@@ -15,6 +16,7 @@ interface Promotion {
   title: string;
   type: string;
   value: number;
+  imageUrl: string | null;
   active: boolean;
   minOrder: number;
   usageLimit: number | null;
@@ -23,7 +25,17 @@ interface Promotion {
   endsAt: string | null;
 }
 
-const EMPTY = { code: "", title: "", type: "PERCENT", value: "", minOrder: "", usageLimit: "", startsAt: "", endsAt: "" };
+const EMPTY = {
+  code: "",
+  title: "",
+  type: "PERCENT",
+  value: "",
+  minOrder: "",
+  usageLimit: "",
+  startsAt: "",
+  endsAt: "",
+  imageUrl: null as string | null,
+};
 
 export function DiscountManager() {
   const { shop } = useVendorShop();
@@ -58,6 +70,7 @@ export function DiscountManager() {
         usageLimit: form.usageLimit ? Number(form.usageLimit) : null,
         startsAt: form.startsAt || undefined,
         endsAt: form.endsAt || undefined,
+        imageUrl: form.imageUrl,
       }),
     });
     setSaving(false);
@@ -94,7 +107,15 @@ export function DiscountManager() {
 
       <div className="mb-6 rounded-2xl border border-border bg-surface p-4">
         <h2 className="mb-3 text-sm font-semibold">Create discount</h2>
-        <div className="grid gap-3 sm:grid-cols-2">
+        <MediaUploader
+          shape="wide"
+          label="Promotion image (optional)"
+          value={form.imageUrl}
+          onChange={(url) => setForm({ ...form, imageUrl: url })}
+          uploadEndpoint="/api/vendor/media"
+          extraFields={{ shopId: shop?.id ?? "", type: "PROMOTION" }}
+        />
+        <div className="mt-3 grid gap-3 sm:grid-cols-2">
           <div>
             <Label>Title</Label>
             <Input value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} placeholder="Weekend Special" />

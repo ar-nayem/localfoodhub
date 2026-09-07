@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/Badge";
 import { formatMoney } from "@/lib/utils";
 import { ORDER_STATUS_FLOW, ORDER_STATUS_LABEL, type OrderType } from "@/lib/constants";
 import { toast } from "@/components/ui/Toast";
+import { OrderReviewSection } from "./OrderReviewSection";
 
 interface OrderData {
   id: string;
@@ -189,6 +190,10 @@ export function OrderView({
           <img src={qrImage} alt="Order QR code" className="h-44 w-44" />
           <p className="mt-3 text-sm text-muted-foreground">Show this QR when collecting your order.</p>
         </div>
+      )}
+
+      {order.orderStatus === "COMPLETED" && !isVerifyingStaff && (
+        <OrderReviewSection orderId={order.id} orderType={order.orderType} items={order.items} />
       )}
     </div>
   );

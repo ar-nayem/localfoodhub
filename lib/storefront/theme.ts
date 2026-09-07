@@ -11,8 +11,8 @@ export interface ThemePreset {
 }
 
 export const THEME_PRESETS: ThemePreset[] = [
-  { key: "classic", label: "Classic", primary: "14 80% 52%", radius: "16px" },
-  { key: "fresh", label: "Fresh", primary: "142 55% 40%", radius: "16px" },
+  { key: "classic", label: "Classic", primary: "152 55% 28%", radius: "16px" }, // platform default green
+  { key: "fresh", label: "Fresh", primary: "142 60% 40%", radius: "16px" },
   { key: "modern", label: "Modern", primary: "215 70% 50%", radius: "10px" },
   { key: "warm", label: "Warm", primary: "30 85% 50%", radius: "20px" },
   { key: "minimal", label: "Minimal", primary: "20 15% 20%", radius: "6px" },

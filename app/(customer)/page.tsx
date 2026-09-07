@@ -71,14 +71,17 @@ export default async function HomePage() {
       {categories.length > 0 && (
         <section className="mb-8">
           <h2 className="mb-3 text-lg font-semibold">Food categories</h2>
-          <div className="flex gap-2 overflow-x-auto pb-1">
+          <div className="flex gap-4 overflow-x-auto pb-1">
             {categories.map((c) => (
               <Link
                 key={c.category}
                 href={`/explore?category=${encodeURIComponent(c.category)}`}
-                className="whitespace-nowrap rounded-full border border-border bg-surface px-4 py-2 text-sm font-medium"
+                className="flex w-16 shrink-0 flex-col items-center gap-1.5 text-center"
               >
-                {c.category} <span className="text-muted-foreground">({c._count})</span>
+                <span className="flex h-14 w-14 items-center justify-center rounded-full bg-primary/10 text-2xl">
+                  {categoryIcon(c.category)}
+                </span>
+                <span className="line-clamp-2 text-xs font-medium leading-tight">{c.category}</span>
               </Link>
             ))}
           </div>
@@ -136,4 +139,21 @@ function EmptyShops() {
       No shops here yet. Check back soon.
     </div>
   );
+}
+
+// Presentation-only heuristic — a small icon per category keeps the rail visually
+// scannable without needing vendor-uploaded category art everywhere.
+function categoryIcon(category: string): string {
+  const c = category.toLowerCase();
+  if (c.includes("bangladeshi") || c.includes("local")) return "🍛";
+  if (c.includes("chinese") || c.includes("noodle")) return "🍜";
+  if (c.includes("café") || c.includes("cafe") || c.includes("coffee")) return "☕";
+  if (c.includes("burger") || c.includes("fast food")) return "🍔";
+  if (c.includes("pizza")) return "🍕";
+  if (c.includes("dessert") || c.includes("bakery")) return "🍰";
+  if (c.includes("drink") || c.includes("juice")) return "🥤";
+  if (c.includes("chicken")) return "🍗";
+  if (c.includes("seafood")) return "🦐";
+  if (c.includes("healthy") || c.includes("vegetarian") || c.includes("vegan")) return "🥗";
+  return "🍽️";
 }

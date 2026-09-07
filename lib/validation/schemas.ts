@@ -95,6 +95,7 @@ export const upsertProductSchema = z.object({
 export const upsertCategorySchema = z.object({
   id: z.string().optional(),
   name: z.string().min(1).max(80),
+  imageUrl: z.string().optional().nullable(),
 });
 
 export const upsertTableSchema = z.object({
@@ -121,4 +122,28 @@ export const generateQrSchema = z.object({
   productId: z.string().optional(),
   locationId: z.string().optional(),
   label: z.string().max(80).optional(),
+});
+
+export const createReviewSchema = z.object({
+  orderItemId: z.string().min(1),
+  rating: z.number().int().min(1).max(5),
+  comment: z.string().max(2000).optional(),
+  tags: z.array(z.string()).max(10).default([]),
+  media: z
+    .array(
+      z.object({
+        type: z.enum(["IMAGE", "VIDEO"]),
+        url: z.string().min(1),
+        mimeType: z.string().optional(),
+        fileSize: z.number().optional(),
+      })
+    )
+    .max(10)
+    .default([]),
+});
+
+export const experienceReviewSchema = z.object({
+  experienceRating: z.number().int().min(1).max(5),
+  serviceRating: z.number().int().min(1).max(5).optional(),
+  experienceComment: z.string().max(2000).optional(),
 });

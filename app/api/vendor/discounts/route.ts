@@ -21,7 +21,7 @@ export async function POST(req: NextRequest) {
   const auth = await requireShopAccess(shopId);
   if ("error" in auth) return auth.error;
 
-  const { code, title, type, value, minOrder, usageLimit, startsAt, endsAt } = body ?? {};
+  const { code, title, type, value, minOrder, usageLimit, startsAt, endsAt, imageUrl } = body ?? {};
   if (!title || !PROMOTION_TYPES.includes(type) || typeof value !== "number") {
     return NextResponse.json({ error: "Invalid discount" }, { status: 400 });
   }
@@ -33,6 +33,7 @@ export async function POST(req: NextRequest) {
       title,
       type,
       value,
+      imageUrl: imageUrl || null,
       minOrder: minOrder || 0,
       usageLimit: usageLimit || null,
       startsAt: startsAt ? new Date(startsAt) : null,

@@ -34,6 +34,7 @@ model User {
   addresses     Address[]
   favorites     Favorite[]
   reviews       Review[]
+  reviewVotes   ReviewHelpfulVote[]
   notifications Notification[]
   auditLogs     AuditLog[]
 }
@@ -122,7 +123,7 @@ model ShopRevision {
   createdAt     DateTime @default(now())
 }
 
-// Media.type: SHOP_LOGO | BANNER | FOOD | GALLERY
+// Media.type: SHOP_LOGO | BANNER | FOOD | GALLERY | PROMOTION | CATEGORY
 // Media.status: PENDING | APPROVED | REJECTED — moderation-ready (spec Section 141); no
 // admin moderation UI in this pass, everything defaults APPROVED and is usable immediately.
 model Media {
@@ -131,6 +132,8 @@ model Media {
   shop      Shop     @relation(fields: [shopId], references: [id], onDelete: Cascade)
   url       String
   type      String
+  mimeType  String?
+  fileSize  Int?
   status    String   @default("APPROVED")
   createdAt DateTime @default(now())
 }
@@ -152,11 +155,12 @@ model ShopStaff {
 // ───────────────────────── Menu ─────────────────────────
 
 model Category {
-  id        String @id @default(cuid())
+  id        String  @id @default(cuid())
   shopId    String
-  shop      Shop   @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  shop      Shop    @relation(fields: [shopId], references: [id], onDelete: Cascade)
   name      String
-  sortOrder Int    @default(0)
+  imageUrl  String?
+  sortOrder Int     @default(0)
 
   products Product[]
 }
@@ -188,6 +192,7 @@ model Product {
   favorites  Favorite[]
   qrCodes    QRCode[]
   discoveryEvents DiscoveryEvent[]
+  reviews    Review[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -346,10 +351,17 @@ model Order {
   orderStatus   String @default("PENDING")
   notes         String?
 
+  // Optional overall-experience rating, separate from each item's own review (spec
+  // Section 205-208) — service/delivery/pickup context depends on orderType.
+  experienceRating   Int?
+  serviceRating      Int?
+  experienceComment  String?
+  experienceReviewedAt DateTime?
+
   items    OrderItem[]
   payment  Payment?
   delivery Delivery?
-  review   Review?
+  reviews  Review[]
   qrCode   QRCode?
 
   createdAt DateTime @default(now())
@@ -368,6 +380,8 @@ model OrderItem {
   selectedOptions String  @default("[]") // JSON [{optionName,valueLabel,priceDelta}]
   selectedAddons  String  @default("[]") // JSON [{name,price}]
   notes           String?
+
+  review Review?
 }
 
 // ───────────────────────── Payments (provider-independent) ─────────────────────────
@@ -457,20 +471,64 @@ model Favorite {
   @@unique([userId, shopId, productId])
 }
 
+// One review per completed order ITEM (spec Section 195/241) — a customer who ordered
+// Chicken Rezala twice in two different orders can review it twice, but never twice for
+// the same orderItem (edit instead of duplicating, spec Section 216).
+// Review.status: PENDING | PUBLISHED | HIDDEN | REJECTED — moderation-ready (Section
+// 220); this pass publishes immediately, no admin moderation queue UI.
 model Review {
-  id             String   @id @default(cuid())
-  orderId        String   @unique
-  order          Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  shopId         String
-  shop           Shop     @relation(fields: [shopId], references: [id], onDelete: Cascade)
-  userId         String
-  user           User     @relation(fields: [userId], references: [id])
-  overallRating  Int
-  foodRating     Int?
-  serviceRating  Int?
-  comment        String?
-  vendorResponse String?
-  createdAt      DateTime @default(now())
+  id          String    @id @default(cuid())
+  orderItemId String    @unique
+  orderItem   OrderItem @relation(fields: [orderItemId], references: [id], onDelete: Cascade)
+  orderId     String
+  order       Order     @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  productId   String
+  product     Product   @relation(fields: [productId], references: [id], onDelete: Cascade)
+  shopId      String
+  shop        Shop      @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  userId      String
+  user        User      @relation(fields: [userId], references: [id])
+
+  rating            Int
+  comment           String?
+  tags              String   @default("[]") // JSON string[] e.g. ["delicious","fresh"]
+  status            String   @default("PUBLISHED")
+  helpfulCount      Int      @default(0)
+  vendorResponse    String?
+  vendorRespondedAt DateTime?
+
+  media        ReviewMedia[]
+  helpfulVotes ReviewHelpfulVote[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// ReviewMedia.type: IMAGE | VIDEO
+model ReviewMedia {
+  id           String   @id @default(cuid())
+  reviewId     String
+  review       Review   @relation(fields: [reviewId], references: [id], onDelete: Cascade)
+  type         String
+  url          String
+  thumbnailUrl String?
+  mimeType     String?
+  fileSize     Int?
+  sortOrder    Int      @default(0)
+  createdAt    DateTime @default(now())
+}
+
+// Enforces "one helpful vote per customer per review" (spec Section 218) via the unique
+// constraint rather than trusting the client not to double-submit.
+model ReviewHelpfulVote {
+  id        String   @id @default(cuid())
+  reviewId  String
+  review    Review   @relation(fields: [reviewId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@unique([reviewId, userId])
 }
 
 // Promotion.type: PERCENT | FIXED | BOGO | FREE_ITEM
@@ -482,6 +540,7 @@ model Promotion {
   title      String
   type       String
   value      Float
+  imageUrl   String?
   active     Boolean @default(true)
   startsAt   DateTime?
   endsAt     DateTime?

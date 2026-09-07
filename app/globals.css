@@ -3,23 +3,24 @@
 @tailwind utilities;
 
 :root {
-  /* Original neutral palette — warm terracotta primary, deep charcoal secondary.
-     Deliberately not Bolt's green. Swap these once the real brand arrives; nothing in
-     the app hard-codes a color outside this block. */
-  --background: 30 20% 98%;
+  /* Platform design tokens — deep/fresh green primary, warm cream surface, dark
+     charcoal secondary; restrained orange/red reserved for discounts/alerts, blue for
+     delivery/tracking/info only. Change values here (or lib/brand.ts for name/logo) to
+     re-theme the whole app — nothing hard-codes a color outside this block. */
+  --background: 40 30% 97%;
   --surface: 0 0% 100%;
-  --foreground: 20 15% 12%;
-  --muted: 30 12% 94%;
-  --muted-foreground: 30 8% 42%;
-  --border: 30 12% 88%;
+  --foreground: 160 15% 12%;
+  --muted: 140 12% 94%;
+  --muted-foreground: 150 8% 42%;
+  --border: 140 12% 88%;
 
-  --primary: 14 80% 52%;
+  --primary: 152 55% 28%;
   --primary-foreground: 0 0% 100%;
-  --secondary: 215 28% 17%;
+  --secondary: 160 20% 14%;
   --secondary-foreground: 0 0% 100%;
 
   --success: 142 60% 36%;
-  --warning: 38 92% 50%;
+  --warning: 30 90% 52%;
   --error: 4 72% 51%;
   --info: 210 80% 52%;
 

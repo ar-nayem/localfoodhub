@@ -21,7 +21,10 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
   const body = await req.json().catch(() => null);
   const updated = await prisma.category.update({
     where: { id: params.id },
-    data: { name: body?.name ?? category.name },
+    data: {
+      name: body?.name ?? category.name,
+      ...(body && "imageUrl" in body ? { imageUrl: body.imageUrl || null } : {}),
+    },
   });
   return NextResponse.json(updated);
 }

@@ -8,6 +8,7 @@ import { Textarea } from "@/components/ui/Input";
 import { Badge } from "@/components/ui/Badge";
 import { formatMoney, cn } from "@/lib/utils";
 import { useCartStore, cartLineKey } from "@/lib/cart/store";
+import { ReviewList } from "./ReviewList";
 import { toast } from "@/components/ui/Toast";
 
 interface OptionValue {
@@ -213,6 +214,8 @@ export function ProductDetail({
             <span className="font-medium">Allergens:</span> {product.allergens.join(", ")}
           </p>
         )}
+
+        <ReviewList productId={product.id} shopName={product.shop.name} />
       </div>
 
       <div className="fixed inset-x-0 bottom-0 z-30 border-t border-border bg-surface px-4 py-3 sm:sticky">

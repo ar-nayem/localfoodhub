@@ -16,6 +16,7 @@ interface PromoRow {
   type: string;
   value: number;
   code: string | null;
+  imageUrl: string | null;
 }
 
 /** Renders the vendor's chosen optional sections (spec Section 112), in their configured
@@ -52,8 +53,16 @@ export function StorefrontSections({
               <h2 className="mb-2 text-sm font-semibold">Today&apos;s Special</h2>
               <div className="flex flex-col gap-2">
                 {activePromotions.map((p) => (
-                  <div key={p.title} className="flex items-center gap-2 rounded-xl border border-primary/30 bg-primary/5 px-3.5 py-2.5 text-sm">
-                    <Percent size={15} className="text-primary" />
+                  <div
+                    key={p.title}
+                    className="flex items-center gap-3 overflow-hidden rounded-xl border border-primary/30 bg-primary/5 px-3.5 py-2.5 text-sm"
+                  >
+                    {p.imageUrl ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={p.imageUrl} alt="" className="h-10 w-10 shrink-0 rounded-lg object-cover" />
+                    ) : (
+                      <Percent size={15} className="shrink-0 text-primary" />
+                    )}
                     <span className="font-medium">{p.title}</span>
                     <span className="text-muted-foreground">
                       {p.type === "PERCENT" ? `${p.value}% off` : `${formatMoney(p.value)} off`}

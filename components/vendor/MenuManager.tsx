@@ -6,11 +6,14 @@ import { formatMoney } from "@/lib/utils";
 import { Button } from "@/components/ui/Button";
 import { Input, Label, Textarea } from "@/components/ui/Input";
 import { Switch } from "@/components/ui/Switch";
+import { MediaUploader } from "@/components/ui/MediaUploader";
+import { MediaLibraryPicker } from "./MediaLibraryPicker";
 import { toast } from "@/components/ui/Toast";
 
 interface Category {
   id: string;
   name: string;
+  imageUrl: string | null;
 }
 interface Product {
   id: string;
@@ -45,8 +48,11 @@ export function MenuManager() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
   const [newCategory, setNewCategory] = useState("");
+  const [newCategoryImage, setNewCategoryImage] = useState<string | null>(null);
   const [form, setForm] = useState<typeof EMPTY_FORM | null>(null);
   const [saving, setSaving] = useState(false);
+  const [showLibrary, setShowLibrary] = useState(false);
+  const [showUrlAdvanced, setShowUrlAdvanced] = useState(false);
 
   async function load() {
     if (!shop) return;
@@ -68,9 +74,10 @@ export function MenuManager() {
     await fetch("/api/vendor/categories", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ shopId: shop.id, name: newCategory.trim() }),
+      body: JSON.stringify({ shopId: shop.id, name: newCategory.trim(), imageUrl: newCategoryImage }),
     });
     setNewCategory("");
+    setNewCategoryImage(null);
     load();
   }
 
@@ -82,6 +89,7 @@ export function MenuManager() {
 
   function openAdd(categoryId: string) {
     setForm({ ...EMPTY_FORM, categoryId });
+    setShowUrlAdvanced(false);
   }
   function openEdit(p: Product) {
     setForm({
@@ -95,6 +103,7 @@ export function MenuManager() {
       status: p.status,
       prepTimeMinutes: String(p.prepTimeMinutes),
     });
+    setShowUrlAdvanced(false);
   }
 
   async function save() {
@@ -146,11 +155,20 @@ export function MenuManager() {
 
   return (
     <div>
-      <div className="mb-5 flex gap-2">
-        <Input value={newCategory} onChange={(e) => setNewCategory(e.target.value)} placeholder="New category name" />
-        <Button variant="outline" onClick={addCategory}>
-          Add category
-        </Button>
+      <div className="mb-5 flex items-end gap-3">
+        <MediaUploader
+          shape="round"
+          value={newCategoryImage}
+          onChange={setNewCategoryImage}
+          uploadEndpoint="/api/vendor/media"
+          extraFields={{ shopId: shop?.id ?? "", type: "CATEGORY" }}
+        />
+        <div className="flex flex-1 gap-2">
+          <Input value={newCategory} onChange={(e) => setNewCategory(e.target.value)} placeholder="New category name" />
+          <Button variant="outline" onClick={addCategory}>
+            Add category
+          </Button>
+        </div>
       </div>
 
       {categories.map((cat) => {
@@ -158,7 +176,13 @@ export function MenuManager() {
         return (
           <div key={cat.id} className="mb-6">
             <div className="mb-2 flex items-center justify-between">
-              <h2 className="text-sm font-semibold">{cat.name}</h2>
+              <div className="flex items-center gap-2">
+                {cat.imageUrl && (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={cat.imageUrl} alt="" className="h-6 w-6 rounded-full object-cover" />
+                )}
+                <h2 className="text-sm font-semibold">{cat.name}</h2>
+              </div>
               <div className="flex gap-3">
                 <button onClick={() => openAdd(cat.id)} className="text-sm font-medium text-primary">
                   + Add item
@@ -171,11 +195,19 @@ export function MenuManager() {
             <div className="flex flex-col gap-2">
               {items.map((p) => (
                 <div key={p.id} className="flex items-center justify-between rounded-xl border border-border bg-surface p-3">
-                  <div>
-                    <p className="font-medium">{p.name}</p>
-                    <p className="text-sm text-muted-foreground">
-                      {formatMoney(p.discountPrice ?? p.price)} · {p.prepTimeMinutes} min
-                    </p>
+                  <div className="flex items-center gap-3">
+                    {p.imageUrl ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={p.imageUrl} alt="" className="h-10 w-10 rounded-lg object-cover" />
+                    ) : (
+                      <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-muted text-sm">🍲</div>
+                    )}
+                    <div>
+                      <p className="font-medium">{p.name}</p>
+                      <p className="text-sm text-muted-foreground">
+                        {formatMoney(p.discountPrice ?? p.price)} · {p.prepTimeMinutes} min
+                      </p>
+                    </div>
                   </div>
                   <div className="flex items-center gap-3">
                     <Switch checked={p.status === "AVAILABLE"} onCheckedChange={() => toggleAvailable(p)} />
@@ -200,6 +232,32 @@ export function MenuManager() {
           <div className="w-full max-w-md rounded-2xl bg-surface p-5">
             <h3 className="mb-3 font-semibold">{form.id ? "Edit item" : "Add item"}</h3>
             <div className="flex max-h-[70vh] flex-col gap-3 overflow-y-auto">
+              <div>
+                <Label>Food image</Label>
+                <MediaUploader
+                  shape="wide"
+                  value={form.imageUrl || null}
+                  onChange={(url) => setForm({ ...form, imageUrl: url ?? "" })}
+                  uploadEndpoint="/api/vendor/media"
+                  extraFields={{ shopId: shop?.id ?? "", type: "FOOD" }}
+                  onBrowseLibrary={() => setShowLibrary(true)}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowUrlAdvanced((v) => !v)}
+                  className="mt-1.5 text-xs text-muted-foreground underline"
+                >
+                  Advanced: use an image URL instead
+                </button>
+                {showUrlAdvanced && (
+                  <Input
+                    className="mt-1.5"
+                    placeholder="https://..."
+                    value={form.imageUrl}
+                    onChange={(e) => setForm({ ...form, imageUrl: e.target.value })}
+                  />
+                )}
+              </div>
               <Input placeholder="Name" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
               <Textarea
                 placeholder="Description"
@@ -221,11 +279,6 @@ export function MenuManager() {
                   />
                 </div>
               </div>
-              <Input
-                placeholder="Image URL (optional)"
-                value={form.imageUrl}
-                onChange={(e) => setForm({ ...form, imageUrl: e.target.value })}
-              />
               <div className="flex gap-3">
                 <div className="flex-1">
                   <Label>Status</Label>
@@ -259,6 +312,17 @@ export function MenuManager() {
             </div>
           </div>
         </div>
+      )}
+
+      {showLibrary && shop && (
+        <MediaLibraryPicker
+          shopId={shop.id}
+          onClose={() => setShowLibrary(false)}
+          onSelect={(url) => {
+            if (form) setForm({ ...form, imageUrl: url });
+            setShowLibrary(false);
+          }}
+        />
       )}
     </div>
   );

@@ -5,6 +5,9 @@ import { useVendorShop } from "@/lib/vendor/useVendorShop";
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
 import { Switch } from "@/components/ui/Switch";
+import { QRCard } from "@/components/qr/QRCard";
+import { qrPurpose } from "@/lib/qr/presentation";
+import { brand, qrBrand } from "@/lib/brand";
 import { toast } from "@/components/ui/Toast";
 
 interface QrRow {
@@ -33,6 +36,7 @@ export function QrCenter() {
   const [newType, setNewType] = useState<(typeof GENERATABLE_TYPES)[number]>("SHOP");
   const [productId, setProductId] = useState("");
   const [generating, setGenerating] = useState(false);
+  const [preview, setPreview] = useState<QrRow | null>(null);
 
   async function load() {
     if (!shop) return;
@@ -84,23 +88,36 @@ export function QrCenter() {
     load();
   }
 
+  // Renders the same platform-branded card (logo, purpose CTA, footer) as <QRCard />,
+  // just as raw HTML since this opens in a separate print window (spec Section 46/98).
   function printQr(qr: QrRow) {
-    const win = window.open("", "_blank", "width=420,height=560");
+    const win = window.open("", "_blank", "width=420,height=620");
     if (!win) return;
+    const purpose = qrPurpose(qr.type);
     win.document.write(`
-      <html><head><title>${shop?.name ?? ""} QR</title>
+      <html><head><title>${shop?.name ?? brand.name} QR</title>
       <style>
-        body { font-family: -apple-system, sans-serif; text-align:center; padding:40px 20px; }
-        h1 { font-size: 18px; margin: 0 0 4px; }
-        p { color:#666; margin: 0 0 24px; }
-        img { width: 260px; height: 260px; }
-        .foot { margin-top: 20px; font-size: 13px; color:#666; }
+        body { font-family: -apple-system, sans-serif; text-align:center; padding:32px 20px; }
+        .card { border: 2px solid hsl(${brand.primaryColorHsl}); border-radius: 28px; padding: 28px 20px; max-width: 300px; margin: 0 auto; }
+        .logo { display:flex; align-items:center; justify-content:center; gap:8px; font-weight:700; font-size:16px; }
+        .mark { width:28px; height:28px; border-radius:8px; background:hsl(${brand.primaryColorHsl}); color:#fff; display:flex; align-items:center; justify-content:center; font-size:13px; }
+        h1 { font-size: 17px; margin: 14px 0 2px; }
+        .sub { color:#666; margin: 0 0 4px; font-size: 13px; }
+        img { width: 220px; height: 220px; margin: 16px 0; padding: 10px; background:#fff; border-radius:16px; }
+        .cta { display:inline-block; background:hsl(${brand.primaryColorHsl}); color:#fff; font-weight:600; font-size:14px; padding:10px 18px; border-radius:999px; }
+        .purposesub { color:#888; margin-top:8px; font-size:12px; }
+        .foot { margin-top: 20px; padding-top: 14px; border-top: 1px solid #eee; font-size: 11px; color:#888; }
       </style></head>
       <body>
-        <h1>${shop?.name ?? ""}</h1>
-        <p>${qr.label ?? qr.type}</p>
-        <img src="${qr.imageDataUrl}" />
-        <div class="foot">Scan to order</div>
+        <div class="card">
+          <div class="logo"><span class="mark">${brand.shortName.slice(0, 1)}</span>${brand.name}</div>
+          <h1>${shop?.name ?? ""}</h1>
+          <p class="sub">${qr.label ?? qr.type}</p>
+          <img src="${qr.imageDataUrl}" />
+          <div><span class="cta">${purpose.cta}</span></div>
+          ${purpose.sub ? `<p class="purposesub">${purpose.sub}</p>` : ""}
+          <div class="foot">${qrBrand.footerText}</div>
+        </div>
         <script>window.onload = () => window.print();</script>
       </body></html>
     `);
@@ -150,8 +167,10 @@ export function QrCenter() {
               </div>
               <Switch checked={qr.status === "ACTIVE"} onCheckedChange={() => toggleStatus(qr)} />
             </div>
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={qr.imageDataUrl} alt={qr.label ?? qr.type} className="mx-auto my-3 h-32 w-32" />
+            <button onClick={() => setPreview(qr)} className="mx-auto my-3 block">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={qr.imageDataUrl} alt={qr.label ?? qr.type} className="h-32 w-32" />
+            </button>
             <div className="grid grid-cols-2 gap-2 text-center text-xs text-muted-foreground">
               <div>
                 <p className="text-sm font-semibold text-foreground">{qr.scanCount}</p>
@@ -168,6 +187,12 @@ export function QrCenter() {
               </p>
             )}
             <div className="mt-3 flex gap-2">
+              <button
+                onClick={() => setPreview(qr)}
+                className="flex-1 rounded-lg border border-border py-1.5 text-xs font-semibold"
+              >
+                Preview
+              </button>
               <a
                 href={qr.imageDataUrl}
                 download={`${qr.type.toLowerCase()}-qr.png`}
@@ -186,6 +211,22 @@ export function QrCenter() {
         ))}
       </div>
       {qrCodes.length === 0 && <p className="text-muted-foreground">No QR codes yet — generate one above.</p>}
+
+      {preview && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
+          onClick={() => setPreview(null)}
+        >
+          <div onClick={(e) => e.stopPropagation()}>
+            <QRCard
+              type={preview.type}
+              title={shop?.name ?? ""}
+              subtitle={preview.label ?? undefined}
+              imageDataUrl={preview.imageDataUrl}
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 }

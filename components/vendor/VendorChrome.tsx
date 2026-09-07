@@ -13,6 +13,7 @@ import {
   LogOut,
   Palette,
   Percent,
+  Star,
 } from "lucide-react";
 import { Logo } from "@/components/brand/Logo";
 import { cn } from "@/lib/utils";
@@ -26,6 +27,7 @@ const NAV = [
   { href: "/vendor/discounts", label: "Discounts", icon: Percent, ownerOnly: true },
   { href: "/vendor/tables", label: "Tables", icon: Grid3x3 },
   { href: "/vendor/qr", label: "QR Center", icon: QrCode },
+  { href: "/vendor/reviews", label: "Reviews", icon: Star },
   { href: "/vendor/staff", label: "Staff", icon: Users, ownerOnly: true },
   { href: "/vendor/settings", label: "Settings", icon: Settings },
 ];

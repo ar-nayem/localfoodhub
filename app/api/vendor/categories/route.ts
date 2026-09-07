@@ -26,7 +26,7 @@ export async function POST(req: NextRequest) {
 
   const count = await prisma.category.count({ where: { shopId: shopId! } });
   const category = await prisma.category.create({
-    data: { shopId: shopId!, name: parsed.data.name, sortOrder: count },
+    data: { shopId: shopId!, name: parsed.data.name, imageUrl: parsed.data.imageUrl || null, sortOrder: count },
   });
   return NextResponse.json(category, { status: 201 });
 }

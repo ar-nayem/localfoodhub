@@ -1,12 +1,14 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useVendorShop } from "@/lib/vendor/useVendorShop";
 import { THEME_PRESETS } from "@/lib/storefront/theme";
 import { Button } from "@/components/ui/Button";
-import { Input, Label, Textarea } from "@/components/ui/Input";
+import { Input, Label } from "@/components/ui/Input";
 import { Switch } from "@/components/ui/Switch";
+import { MediaUploader } from "@/components/ui/MediaUploader";
+import { MediaLibraryPicker } from "./MediaLibraryPicker";
 import { toast } from "@/components/ui/Toast";
 import { cn } from "@/lib/utils";
 
@@ -36,9 +38,7 @@ export function StorefrontEditor() {
   const [products, setProducts] = useState<ProductRow[]>([]);
   const [saving, setSaving] = useState(false);
   const [publishing, setPublishing] = useState(false);
-  const [uploading, setUploading] = useState<"logo" | "cover" | null>(null);
-  const logoInputRef = useRef<HTMLInputElement>(null);
-  const coverInputRef = useRef<HTMLInputElement>(null);
+  const [libraryTarget, setLibraryTarget] = useState<"logoUrl" | "coverUrl" | null>(null);
 
   async function load() {
     if (!shop) return;
@@ -60,24 +60,6 @@ export function StorefrontEditor() {
 
   function set<K extends keyof StorefrontConfig>(key: K, value: StorefrontConfig[K]) {
     setForm((f) => (f ? { ...f, [key]: value } : f));
-  }
-
-  async function uploadImage(file: File, target: "logo" | "cover") {
-    if (!shop) return;
-    setUploading(target);
-    const body = new FormData();
-    body.append("file", file);
-    body.append("shopId", shop.id);
-    body.append("type", target === "logo" ? "SHOP_LOGO" : "BANNER");
-    const res = await fetch("/api/vendor/media", { method: "POST", body });
-    setUploading(null);
-    if (!res.ok) {
-      const data = await res.json().catch(() => ({}));
-      toast(data.error || "Upload failed", "error");
-      return;
-    }
-    const media = await res.json();
-    set(target === "logo" ? "logoUrl" : "coverUrl", media.url);
   }
 
   async function saveDraft(showToast = true) {
@@ -156,35 +138,25 @@ export function StorefrontEditor() {
 
       <Section title="Logo & banner">
         <div className="flex gap-6">
-          <ImageUpload
+          <MediaUploader
             label="Logo"
-            url={form.logoUrl}
-            uploading={uploading === "logo"}
-            onPick={() => logoInputRef.current?.click()}
             shape="round"
+            value={form.logoUrl}
+            onChange={(url) => set("logoUrl", url)}
+            uploadEndpoint="/api/vendor/media"
+            extraFields={{ shopId: shop.id, type: "SHOP_LOGO" }}
+            onBrowseLibrary={() => setLibraryTarget("logoUrl")}
           />
-          <ImageUpload
+          <MediaUploader
             label="Banner"
-            url={form.coverUrl}
-            uploading={uploading === "cover"}
-            onPick={() => coverInputRef.current?.click()}
             shape="wide"
+            value={form.coverUrl}
+            onChange={(url) => set("coverUrl", url)}
+            uploadEndpoint="/api/vendor/media"
+            extraFields={{ shopId: shop.id, type: "BANNER" }}
+            onBrowseLibrary={() => setLibraryTarget("coverUrl")}
           />
         </div>
-        <input
-          ref={logoInputRef}
-          type="file"
-          accept="image/png,image/jpeg,image/webp,image/svg+xml"
-          hidden
-          onChange={(e) => e.target.files?.[0] && uploadImage(e.target.files[0], "logo")}
-        />
-        <input
-          ref={coverInputRef}
-          type="file"
-          accept="image/png,image/jpeg,image/webp,image/svg+xml"
-          hidden
-          onChange={(e) => e.target.files?.[0] && uploadImage(e.target.files[0], "cover")}
-        />
 
         <div className="mt-4 grid gap-3 sm:grid-cols-2">
           <div>
@@ -290,6 +262,17 @@ export function StorefrontEditor() {
           {publishing ? "Publishing..." : "Publish Changes"}
         </Button>
       </div>
+
+      {libraryTarget && (
+        <MediaLibraryPicker
+          shopId={shop.id}
+          onClose={() => setLibraryTarget(null)}
+          onSelect={(url) => {
+            set(libraryTarget, url);
+            setLibraryTarget(null);
+          }}
+        />
+      )}
     </div>
   );
 }
@@ -299,41 +282,6 @@ function Section({ title, children }: { title: string; children: React.ReactNode
     <div className="mb-6">
       <h2 className="mb-2.5 text-sm font-semibold">{title}</h2>
       {children}
-    </div>
-  );
-}
-
-function ImageUpload({
-  label,
-  url,
-  uploading,
-  onPick,
-  shape,
-}: {
-  label: string;
-  url: string | null;
-  uploading: boolean;
-  onPick: () => void;
-  shape: "round" | "wide";
-}) {
-  return (
-    <div>
-      <p className="mb-1.5 text-xs font-medium text-muted-foreground">{label}</p>
-      <button
-        onClick={onPick}
-        disabled={uploading}
-        className={cn(
-          "flex items-center justify-center overflow-hidden border border-dashed border-border bg-muted text-xs text-muted-foreground",
-          shape === "round" ? "h-20 w-20 rounded-full" : "h-20 w-40 rounded-xl"
-        )}
-      >
-        {uploading ? "Uploading..." : url ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img src={url} alt={label} className="h-full w-full object-cover" />
-        ) : (
-          "Upload"
-        )}
-      </button>
     </div>
   );
 }

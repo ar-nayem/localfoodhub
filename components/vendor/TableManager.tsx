@@ -5,6 +5,7 @@ import { useVendorShop } from "@/lib/vendor/useVendorShop";
 import { Button } from "@/components/ui/Button";
 import { Input, Label } from "@/components/ui/Input";
 import { Badge } from "@/components/ui/Badge";
+import { QRCard } from "@/components/qr/QRCard";
 import { toast } from "@/components/ui/Toast";
 
 interface TableRow {
@@ -121,14 +122,12 @@ export function TableManager() {
 
       {qrPreview && (
         <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/40 p-4" onClick={() => setQrPreview(null)}>
-          <div className="flex flex-col items-center rounded-2xl bg-surface p-6" onClick={(e) => e.stopPropagation()}>
-            <p className="mb-2 font-semibold">Table {qrPreview.table}</p>
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={qrPreview.dataUrl} alt={`QR for table ${qrPreview.table}`} className="h-56 w-56" />
+          <div className="flex flex-col items-center" onClick={(e) => e.stopPropagation()}>
+            <QRCard type="TABLE" title={shop?.name ?? ""} subtitle={`Table ${qrPreview.table}`} imageDataUrl={qrPreview.dataUrl} />
             <a
               href={qrPreview.dataUrl}
               download={`table-${qrPreview.table}-qr.png`}
-              className="mt-3 rounded-lg border border-primary px-4 py-2 text-sm font-semibold text-primary"
+              className="mt-3 rounded-lg border border-primary bg-surface px-4 py-2 text-sm font-semibold text-primary"
             >
               Download PNG
             </a>

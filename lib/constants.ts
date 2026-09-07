@@ -152,3 +152,18 @@ export const PRICE_BUCKETS: PriceBucket[] = [
   { key: "mid", label: "Mid-range", min: 150, max: 350 },
   { key: "premium", label: "Premium", min: 350 },
 ];
+
+// Quick review tags (spec Section 209) — positive and negative, all optional.
+export const REVIEW_TAGS = [
+  { key: "delicious", label: "Delicious", sentiment: "positive" },
+  { key: "fresh", label: "Fresh", sentiment: "positive" },
+  { key: "great_portion", label: "Great portion", sentiment: "positive" },
+  { key: "good_value", label: "Good value", sentiment: "positive" },
+  { key: "perfect_spice", label: "Perfect spice", sentiment: "positive" },
+  { key: "would_order_again", label: "Would order again", sentiment: "positive" },
+  { key: "too_salty", label: "Too salty", sentiment: "negative" },
+  { key: "too_spicy", label: "Too spicy", sentiment: "negative" },
+  { key: "small_portion", label: "Small portion", sentiment: "negative" },
+  { key: "cold", label: "Cold", sentiment: "negative" },
+  { key: "slow_prep", label: "Slow preparation", sentiment: "negative" },
+] as const;

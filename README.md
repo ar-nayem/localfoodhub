@@ -59,6 +59,22 @@ Customers don't need an account — guest checkout works for all three order mod
    product's *Discoverable* checkbox, to opt in/out. `/vendor` overview shows a simple
    shown/selected/ordered count once your food has been surfaced at least once.
 
+## Walking reviews and local image uploads
+
+1. Complete an order end-to-end (see the QR flow above) and mark it **Collected**/
+   Completed on the vendor side.
+2. As the customer who placed it, open `/orders/[id]` — a review composer appears per
+   order item (verified-purchase only: you must be the customer on a COMPLETED order
+   containing that item). Star rating + text required; photos/video optional via the same
+   local-device uploader used everywhere else in the app (drag-drop or tap to browse —
+   never a paste-a-URL field). One review per order item, enforced in the DB.
+3. Reviews show on the product page (`ReviewList`) with helpful votes and, once a vendor
+   responds from `/vendor/reviews`, an inline vendor reply.
+4. The upload component itself (`components/ui/MediaUploader.tsx`) and the vendor's
+   reusable media library (`/vendor/storefront` → any image field → "Choose existing")
+   are shared by shop logos/banners, product photos, and review media — one upload
+   pipeline (`lib/media/save.ts`), not three.
+
 ## Walking the Shop Builder ("Customize My Shop")
 
 1. Sign in as any `owner-*@localfoodhub.demo` (owner role only — staff can't reach this
@@ -79,23 +95,32 @@ Customers don't need an account — guest checkout works for all three order mod
 delivery + pickup + dine-in checkout, a real `PaymentService` abstraction behind a mock
 provider (swap-ready, see `lib/payment/`), order confirmation + live-polling tracking,
 the full QR system (secure-token generation, `/q/[token]` resolver covering every QR
-type from the spec, an in-app camera scanner via `jsqr`, staff order-QR verification),
-vendor dashboard (Kanban order board, a large-card Kitchen Display view, menu/category
-management, table + QR management with print/download, light staff invites), a lighter
-admin pass (shop approval queue, platform QR overview, location management, overview
-stats), a vendor **Shop Builder** (logo/banner upload, theme presets with a
-contrast-safety check, optional storefront sections, featured products, draft/publish
-with revision history) and shop-wide discount management, and **Explore** — a
-budget/people/mood/order-type quiz feeding a rating-weighted-but-still-random
-recommendation engine with pass/choose, session-scoped no-repeat, and lightweight
-shown/clicked/ordered event logging.
+type from the spec, an in-app camera scanner via `jsqr`, staff order-QR verification, and
+every QR — regardless of type or which shop it belongs to — rendered through one
+platform-branded `<QRCard />` component that a vendor's own shop theme can never
+override, see Architecture below), vendor dashboard (Kanban order board, a large-card
+Kitchen Display view, menu/category management, table + QR management with print/
+download, light staff invites), a lighter admin pass (shop approval queue, platform QR
+overview, location management, overview stats), a vendor **Shop Builder** (logo/banner
+upload, theme presets with a contrast-safety check, optional storefront sections,
+featured products, draft/publish with revision history) and shop-wide discount
+management, **Explore** — a budget/people/mood/order-type quiz feeding a
+rating-weighted-but-still-random recommendation engine with pass/choose, session-scoped
+no-repeat, and lightweight shown/clicked/ordered event logging, a **universal local-device
+image/video upload system** used identically for shop logos/banners, product photos, and
+review media (drag-drop, local disk storage behind a swappable `lib/media/save.ts`, a
+reusable media-library picker so a vendor can reuse an image instead of re-uploading —
+Image URL is never offered as the primary input anywhere), and the **customer review
+system** (verified-purchase-only, one review per order item, star + text + photo/video,
+helpful votes, vendor responses, a `status` field ready for moderation).
 
 **Schema-complete, UI-deferred** (so nothing here blocks the feature later — see the
-model comments in `prisma/schema.prisma`): reviews, delivery-courier tracking,
-notifications (persisted + console-logged via `lib/notifications/`, no real push/SMS/
-email provider wired), cross-device cart persistence (cart is client-side/localStorage
-for this pass), audit log (written on every admin shop-status change, no viewer UI yet),
-image moderation (`Media.status` defaults `APPROVED`, no admin review queue).
+model comments in `prisma/schema.prisma`): delivery-courier tracking, notifications
+(persisted + console-logged via `lib/notifications/`, no real push/SMS/email provider
+wired), cross-device cart persistence (cart is client-side/localStorage for this pass),
+audit log (written on every admin shop-status change, no viewer UI yet), review/image
+moderation (`Review.status` and `Media.status` both default to an approved-equivalent
+value with the field ready to gate on, no admin moderation queue UI).
 
 **Not attempted this pass**: full analytics dashboards/charts (Explore and QR both log
 real events; only simple counts are surfaced, not funnels/charts), multi-branch shops,
@@ -103,9 +128,11 @@ inventory depth beyond available/sold-out, PWA installability, SEO polish beyond
 titles, real geolocation/distance-based filtering in Explore (no lat/lng on shops —
 "location" there is the existing food-court `Location` model, not GPS), image
 cropping/multi-size optimization (uploads are stored as-is on local disk, see
-`lib/vendor/media.ts`), drag-and-drop reordering anywhere (simple toggles/buttons
-instead), and the 11-step onboarding wizard (replaced with a completion-percent
-checklist on the vendor Overview page, spec's own Section 117 alternative).
+`lib/vendor/media.ts`), video transcoding/compression (stored as uploaded, size-capped
+only), drag-and-drop reordering anywhere (simple toggles/buttons instead), the 11-step
+onboarding wizard (replaced with a completion-percent checklist on the vendor Overview
+page, spec's own Section 117 alternative), dark mode, and SVG/PDF QR export (PNG
+download/print only).
 
 ## Architecture
 
@@ -132,6 +159,18 @@ checklist on the vendor Overview page, spec's own Section 117 alternative).
   status/type field is a plain `String` column — the authoritative value lists live in
   `lib/constants.ts` (this doubles as the spec's "centralized status constants"
   requirement).
+- **Brand config**: `lib/brand.ts` centralizes `MAIN_PLATFORM_NAME`,
+  `MAIN_PLATFORM_LOGO`, and `MAIN_PLATFORM_PRIMARY_COLOR` — swap in a real name/logo/
+  color here once they exist, nothing else needs to change. The default palette is a
+  green/cream/charcoal scheme (`app/globals.css`), with orange/red reserved for
+  discounts/alerts and blue reserved for delivery/tracking/info, never used as the
+  primary brand color.
+- **Platform-branded QR cards**: `components/qr/QRCard.tsx` (on-screen) and the matching
+  hand-built HTML in `QrCenter.tsx`'s `printQr()` (print window — a separate window can't
+  render the live React tree) are the only two places a QR is ever rendered. Both always
+  pull from `lib/brand.ts`, never from a shop's `ShopThemeProvider` scope, so a customer
+  can trust that any QR carrying the platform logo/footer is genuine regardless of which
+  vendor generated it.
 
 ## Project structure
 

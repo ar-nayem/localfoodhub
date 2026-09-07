@@ -4,6 +4,7 @@ import { ShopHeader } from "@/components/customer/ShopHeader";
 import { ShopMenu } from "@/components/customer/ShopMenu";
 import { ShopThemeProvider } from "@/components/customer/ShopThemeProvider";
 import { StorefrontSections } from "@/components/customer/StorefrontSections";
+import { ReviewList } from "@/components/customer/ReviewList";
 import { defaultSectionsConfig } from "@/lib/storefront/theme";
 import { safeJsonParse } from "@/lib/utils";
 
@@ -95,6 +96,9 @@ export default async function ShopPage({
           dineInTable={dineInTable}
           dineInQrToken={dineInTable ? searchParams.qr! : undefined}
         />
+        <div className="px-4 sm:px-6">
+          <ReviewList shopId={shop.id} shopName={shop.name} />
+        </div>
       </main>
     </ShopThemeProvider>
   );
