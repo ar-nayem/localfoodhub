@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { MapPin, ChevronDown, X } from "lucide-react";
 import { useGeolocation } from "@/lib/location/useGeolocation";
+import { SERVICE_AREA_RADIUS_KM } from "@/lib/location/distance";
 
 interface LocationRow {
   id: string;
@@ -24,6 +25,11 @@ export function LocationPill() {
   const [resolvedName, setResolvedName] = useState<string | null>(null);
   const [locations, setLocations] = useState<LocationRow[] | null>(null);
   const [picking, setPicking] = useState(false);
+  // True once a real GPS fix came back with nothing inside SERVICE_AREA_RADIUS_KM — a
+  // customer genuinely far away, not a loading state. Kept distinct from "no fix yet" so
+  // the pill can say so honestly instead of quietly falling back to a default city name
+  // that would otherwise read as a (wrong) location detection.
+  const [outOfRange, setOutOfRange] = useState(false);
 
   // Default location name, fetched once regardless of geolocation outcome — this is what
   // renders for a denied/unavailable permission instead of a blank pill.
@@ -36,12 +42,21 @@ export function LocationPill() {
 
   useEffect(() => {
     if (!coords) return;
-    const params = new URLSearchParams({ lat: String(coords.lat), lng: String(coords.lng), radiusKm: "50" });
+    const params = new URLSearchParams({
+      lat: String(coords.lat),
+      lng: String(coords.lng),
+      radiusKm: String(SERVICE_AREA_RADIUS_KM),
+    });
     fetch(`/api/shops?${params.toString()}`)
       .then((r) => r.json())
-      .then((shops: { location?: { name: string } | null }[]) => {
-        const nearest = shops.find((s) => s.location?.name);
-        if (nearest?.location) setResolvedName(nearest.location.name);
+      .then((shops: { location?: { name: string } | null; distanceKm: number | null }[]) => {
+        const nearest = shops.find((s) => s.location?.name && s.distanceKm != null);
+        if (nearest?.location) {
+          setResolvedName(nearest.location.name);
+          setOutOfRange(false);
+        } else {
+          setOutOfRange(true);
+        }
       })
       .catch(() => undefined);
   }, [coords]);
@@ -50,7 +65,9 @@ export function LocationPill() {
   const label =
     status === "locating" && !resolvedName
       ? "Detecting your location..."
-      : resolvedName ?? defaultLocationName;
+      : outOfRange && !resolvedName
+        ? "Outside service area"
+        : resolvedName ?? defaultLocationName;
 
   return (
     <>
@@ -84,6 +101,13 @@ export function LocationPill() {
               <p className="mb-3 rounded-xl bg-muted px-3 py-2 text-xs text-muted-foreground">
                 Location access was denied — pick an area below, or allow location access
                 in your browser to detect it automatically.
+              </p>
+            )}
+
+            {status === "granted" && outOfRange && !resolvedName && (
+              <p className="mb-3 rounded-xl bg-muted px-3 py-2 text-xs text-muted-foreground">
+                We couldn&apos;t find a food court near your current location — pick an area
+                below to browse it anyway.
               </p>
             )}
 

@@ -11,9 +11,18 @@ export function haversineKm(lat1: number, lng1: number, lat2: number, lng2: numb
   return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 }
 
-/** "250 m" / "1.2 km" — never exposes raw coordinates, just the friendly distance a
- * customer actually wants to see. */
+/** "250 m" / "1.2 km" / "1,662 km" — never exposes raw coordinates, just the friendly
+ * distance a customer actually wants to see. */
 export function formatDistance(km: number): string {
   if (km < 1) return `${Math.round(km * 1000)} m`;
-  return `${km.toFixed(km < 10 ? 1 : 0)} km`;
+  const value = km.toFixed(km < 10 ? 1 : 0);
+  const [whole, frac] = value.split(".");
+  const withCommas = whole.replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+  return frac ? `${withCommas}.${frac} km` : `${withCommas} km`;
 }
+
+/** Beyond this, a shop isn't realistically "nearby" — the map/list switch from a plain
+ * distance readout to an honest "outside your area" state instead of a number that reads
+ * as broken (a customer on the other side of the world seeing "1,662 km" with no context
+ * looks like a bug, not a feature). */
+export const SERVICE_AREA_RADIUS_KM = 50;

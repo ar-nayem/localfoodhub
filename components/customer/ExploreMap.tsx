@@ -114,9 +114,13 @@ export function ExploreMap({
         marker.addTo(layerRef.current!);
         markersRef.current.set(shop.id, marker);
       }
-      if (withCoords.length > 0 && !userCoords) {
+      // Always frame the shops, not the customer's own position — a map whose whole
+      // purpose is showing nearby food has to actually show the food. Centering tight on
+      // the customer instead (the old behavior) left every marker off-screen for anyone
+      // outside the immediate area, which read as broken rather than "you're far away."
+      if (withCoords.length > 0) {
         const bounds = L.latLngBounds(withCoords.map((s) => [s.latitude!, s.longitude!] as [number, number]));
-        mapRef.current!.fitBounds(bounds, { padding: [40, 40], maxZoom: 15 });
+        mapRef.current!.fitBounds(bounds, { padding: [48, 48], maxZoom: 15 });
       }
     });
   }, [ready, shops, userCoords]);

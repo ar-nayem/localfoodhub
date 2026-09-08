@@ -3,14 +3,14 @@
 import { Suspense, useEffect, useMemo, useState } from "react";
 import dynamic from "next/dynamic";
 import { useSearchParams, useRouter } from "next/navigation";
-import { Map as MapIcon, List as ListIcon } from "lucide-react";
+import { Map as MapIcon, List as ListIcon, MapPinOff } from "lucide-react";
 import { SearchBar } from "@/components/customer/SearchBar";
 import { ShopCard, type ShopCardData } from "@/components/customer/ShopCard";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { cn } from "@/lib/utils";
 import { isOrderTypeActive } from "@/lib/constants";
 import { useGeolocation } from "@/lib/location/useGeolocation";
-import { formatDistance } from "@/lib/location/distance";
+import { formatDistance, SERVICE_AREA_RADIUS_KM } from "@/lib/location/distance";
 import type { MapShop } from "@/components/customer/ExploreMap";
 
 // Leaflet touches `window` at import time — client-only.
@@ -59,10 +59,19 @@ function ExploreContent() {
       search.set("lat", String(coords.lat));
       search.set("lng", String(coords.lng));
     }
+    // `coords` starts null and flips to a real fix moments later, firing this effect twice
+    // in quick succession. Without this guard the *first* (no-coords) response can land
+    // after the second (with-coords) one and clobber good distance data with nulls.
+    let ignore = false;
     setShops(null);
     fetch(`/api/shops?${search.toString()}`)
       .then((r) => r.json())
-      .then(setShops);
+      .then((data) => {
+        if (!ignore) setShops(data);
+      });
+    return () => {
+      ignore = true;
+    };
   }, [q, mode, category, coords]);
 
   function setMode(next: string) {
@@ -89,6 +98,15 @@ function ExploreContent() {
       })),
     [shops]
   );
+
+  // Nearest real shop, straight-line. Only meaningful once we actually have a GPS fix —
+  // no fix means no honest claim about how far anything is.
+  const nearestKm = useMemo(() => {
+    if (!coords || !shops) return null;
+    const known = shops.map((s) => s.distanceKm).filter((d): d is number => d != null);
+    return known.length ? Math.min(...known) : null;
+  }, [coords, shops]);
+  const outsideServiceArea = nearestKm != null && nearestKm > SERVICE_AREA_RADIUS_KM;
 
   return (
     <main className="mx-auto max-w-6xl px-4 pb-10 pt-6 sm:px-6">
@@ -140,6 +158,19 @@ function ExploreContent() {
         )}
       </div>
 
+      {outsideServiceArea && (
+        <div className="mb-4 flex items-start gap-3 rounded-2xl border border-warning/30 bg-warning/10 px-4 py-3">
+          <MapPinOff size={18} className="mt-0.5 shrink-0 text-warning" />
+          <div className="text-sm">
+            <p className="font-semibold">You&apos;re outside our current service area</p>
+            <p className="text-muted-foreground">
+              Our nearest shop is {formatDistance(nearestKm!)} away, so delivery won&apos;t reach you here — browse
+              below anyway, or come back when you&apos;re closer.
+            </p>
+          </div>
+        </div>
+      )}
+
       {!shops ? (
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {Array.from({ length: 6 }).map((_, i) => (
@@ -155,7 +186,7 @@ function ExploreContent() {
           {shops.map((shop) => (
             <div key={shop.slug} className="relative">
               <ShopCard shop={shop} />
-              {shop.distanceKm != null && (
+              {shop.distanceKm != null && !outsideServiceArea && (
                 <span className="pointer-events-none absolute left-3 top-3 rounded-full bg-black/60 px-2 py-0.5 text-[11px] font-medium text-white">
                   {formatDistance(shop.distanceKm)}
                 </span>
@@ -186,7 +217,7 @@ function ExploreContent() {
                   <p className="truncate text-xs text-muted-foreground">{shop.category}</p>
                   <div className="mt-0.5 flex items-center gap-2 text-xs text-muted-foreground">
                     <span>{shop.rating > 0 ? `★ ${shop.rating.toFixed(1)}` : "New"}</span>
-                    {shop.distanceKm != null && <span>{formatDistance(shop.distanceKm)}</span>}
+                    {shop.distanceKm != null && !outsideServiceArea && <span>{formatDistance(shop.distanceKm)}</span>}
                   </div>
                 </div>
               </button>
