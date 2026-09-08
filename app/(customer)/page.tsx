@@ -1,5 +1,6 @@
 import Link from "next/link";
-import { Truck, ShoppingBag, UtensilsCrossed, QrCode, Sparkles, Star, Tag, Utensils } from "lucide-react";
+import Image from "next/image";
+import { Truck, ShoppingBag, UtensilsCrossed, QrCode, Star, Tag, Utensils } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { brand } from "@/lib/brand";
 import { SearchBar } from "@/components/customer/SearchBar";
@@ -135,24 +136,28 @@ export default async function HomePage() {
         </section>
       )}
 
-      {/* Explore / discovery */}
+      {/* Explore / discovery — the whole banner is one link into the existing /discover
+          flow. The artwork carries its own copy and its own "Explore Now" button, so there
+          is deliberately no second interactive element inside: tapping the headline, the
+          food photo, the button or any empty space all do the same thing.
+
+          The source PNG has ~23% white margin above and below the artwork; the fixed
+          aspect ratio plus object-cover trims that off in CSS so the file itself stays
+          exactly as supplied. */}
       <section className="mb-6">
         <Link
           href="/discover"
-          className="flex items-center justify-between gap-4 overflow-hidden rounded-2xl border border-primary/20 bg-primary/5 px-5 py-4 transition-transform active:scale-[0.99] sm:px-8 sm:py-6"
+          aria-label="Explore food recommendations"
+          className="group relative block aspect-[2.7/1] w-full overflow-hidden rounded-2xl transition-transform active:scale-[0.99]"
         >
-          <div>
-            <p className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-primary">
-              <Sparkles size={14} /> Explore
-            </p>
-            <h2 className="mt-1 text-lg font-bold sm:text-2xl">Not sure what to eat?</h2>
-            <p className="mt-1 text-sm text-muted-foreground">
-              Answer a few quick questions and let us surprise you.
-            </p>
-          </div>
-          <span className="hidden shrink-0 rounded-xl bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground sm:block">
-            Explore Now →
-          </span>
+          <Image
+            src="/explore-banner.png"
+            alt=""
+            fill
+            priority
+            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 100vw, 1152px"
+            className="object-cover object-center transition-opacity group-hover:opacity-95"
+          />
         </Link>
       </section>
 
