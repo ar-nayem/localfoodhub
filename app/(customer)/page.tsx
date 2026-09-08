@@ -48,39 +48,31 @@ export default async function HomePage() {
         </div>
       </section>
 
-      {/* Hero — desktop only. The mobile home screen goes straight from search to the
-          quick-access row; the poster is not shown there. */}
-      <section className="mb-5 hidden sm:block">
-        <div className="relative overflow-hidden rounded-3xl bg-secondary px-5 py-6 text-secondary-foreground sm:px-8 sm:py-10">
-          <div
-            aria-hidden
-            className="pointer-events-none absolute -right-10 -top-12 h-48 w-48 rounded-full opacity-30 blur-2xl"
-            style={{ background: "radial-gradient(circle, #7BC47F, transparent 70%)" }}
+      {/* Explore / discovery — moved to the top, right under search, ahead of the
+          quick-access row and Today's Picks. The whole banner is one link into the
+          existing /discover flow. The artwork carries its own copy and its own
+          "Explore Now" button, so there is deliberately no second interactive element
+          inside: tapping the headline, the food photo, the button or any empty space
+          all do the same thing.
+
+          The source PNG has ~23% white margin above and below the artwork; the fixed
+          aspect ratio plus object-cover trims that off in CSS so the file itself stays
+          exactly as supplied. */}
+      <section className="mb-6">
+        <Link
+          href="/discover"
+          aria-label="Explore food recommendations"
+          className="group relative block aspect-[2.7/1] w-full overflow-hidden rounded-2xl transition-transform active:scale-[0.99]"
+        >
+          <Image
+            src="/explore-banner.png"
+            alt=""
+            fill
+            priority
+            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 100vw, 1152px"
+            className="object-cover object-center transition-opacity group-hover:opacity-95"
           />
-          <div className="relative max-w-[16rem] sm:max-w-md">
-            <h2 className="text-[26px] font-bold leading-[1.15] sm:text-4xl">
-              Good Food
-              <br />
-              Brings
-              <br className="sm:hidden" /> People Together
-            </h2>
-            <p className="mt-2 text-sm text-secondary-foreground/80">
-              Discover amazing local food around you.
-            </p>
-            <Link
-              href="/explore"
-              className="mt-4 inline-flex items-center gap-1.5 rounded-full bg-white px-5 py-2.5 text-sm font-semibold text-secondary"
-            >
-              Explore Now <span aria-hidden>→</span>
-            </Link>
-          </div>
-          <span
-            aria-hidden
-            className="absolute -bottom-3 right-2 text-[5.5rem] leading-none opacity-90 sm:right-10 sm:text-[8rem]"
-          >
-            🍜
-          </span>
-        </div>
+        </Link>
       </section>
 
       {/* Quick access */}
@@ -135,31 +127,6 @@ export default async function HomePage() {
           </div>
         </section>
       )}
-
-      {/* Explore / discovery — the whole banner is one link into the existing /discover
-          flow. The artwork carries its own copy and its own "Explore Now" button, so there
-          is deliberately no second interactive element inside: tapping the headline, the
-          food photo, the button or any empty space all do the same thing.
-
-          The source PNG has ~23% white margin above and below the artwork; the fixed
-          aspect ratio plus object-cover trims that off in CSS so the file itself stays
-          exactly as supplied. */}
-      <section className="mb-6">
-        <Link
-          href="/discover"
-          aria-label="Explore food recommendations"
-          className="group relative block aspect-[2.7/1] w-full overflow-hidden rounded-2xl transition-transform active:scale-[0.99]"
-        >
-          <Image
-            src="/explore-banner.png"
-            alt=""
-            fill
-            priority
-            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 100vw, 1152px"
-            className="object-cover object-center transition-opacity group-hover:opacity-95"
-          />
-        </Link>
-      </section>
 
       {categories.length > 0 && (
         <section className="mb-6">
