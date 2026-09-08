@@ -1,16 +1,11 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { loadGoogleMaps } from "@/lib/maps/loadGoogleMaps";
 import type { PlaceResult } from "@/lib/maps/types";
 
-// Minimal shape of the parts of the `gmp-place-autocomplete` custom element and its
-// select event this file actually touches — @types/google.maps doesn't yet cover the
-// newer Places UI Kit elements, so this stands in rather than reaching for `any`.
-interface PlaceAutocompleteElement extends HTMLElement {
-  value?: string;
-}
-interface PlacePrediction {
+interface Suggestion {
+  text: string;
   toPlace(): {
     fetchFields(opts: { fields: string[] }): Promise<void>;
     displayName?: string | null;
@@ -21,14 +16,17 @@ interface PlacePrediction {
 }
 
 /**
- * `google.maps.places.PlaceAutocompleteElement` — the current Places UI Kit search box,
- * not the classic `google.maps.places.Autocomplete` widget. That widget is confirmed
- * unavailable to Google Cloud projects created after March 1 2025 (Google's own console
- * warning), so it isn't a safe choice for a freshly-created key; this is the one Google
- * actually points new integrations at (the same component the spec's own reference links
- * describe). It's a self-rendering custom element (shadow DOM), so this wraps it rather
- * than binding to a plain `<input>` the way the classic widget allowed — the CSS custom
- * properties below are Google's documented theming hooks for matching a host app's look.
+ * Places search rendered as a plain app-styled `<input>` with our own dropdown list —
+ * deliberately NOT `google.maps.places.Autocomplete` (Google's own console warning: not
+ * available to Google Cloud projects created after March 1 2025, so unsafe to rely on for
+ * a freshly-created key) and NOT `PlaceAutocompleteElement` either (a self-rendering
+ * shadow-DOM custom element; tried it first, but its default theming didn't take our CSS
+ * custom properties and rendered a dark box that clashed with this app's light surface —
+ * confirmed live on menu.arnayem.top, not a local-only quirk).
+ *
+ * Instead this calls `AutocompleteSuggestion.fetchAutocompleteSuggestions` directly — the
+ * current, non-deprecated Places API (New) data method with no required UI — and renders
+ * the results in a list styled exactly like every other dropdown in this app.
  */
 export function PlaceAutocompleteInput({
   placeholder = "Search for a place...",
@@ -39,68 +37,100 @@ export function PlaceAutocompleteInput({
   onSelect: (place: PlaceResult) => void;
   className?: string;
 }) {
+  const [value, setValue] = useState("");
+  const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
+  const [open, setOpen] = useState(false);
+  const sessionTokenRef = useRef<google.maps.places.AutocompleteSessionToken | null>(null);
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
-  const onSelectRef = useRef(onSelect);
-  onSelectRef.current = onSelect;
 
   useEffect(() => {
-    let cancelled = false;
-    let el: PlaceAutocompleteElement | null = null;
-    let handler: ((e: Event) => void) | null = null;
-
-    loadGoogleMaps()
-      .then(async (g) => {
-        if (cancelled || !containerRef.current) return;
-        const placesLib = (await g.maps.importLibrary("places")) as unknown as {
-          PlaceAutocompleteElement: new (opts?: Record<string, unknown>) => PlaceAutocompleteElement;
-        };
-        if (cancelled || !containerRef.current) return;
-
-        el = new placesLib.PlaceAutocompleteElement({});
-        el.setAttribute("placeholder", placeholder);
-        containerRef.current.innerHTML = "";
-        containerRef.current.appendChild(el);
-
-        handler = async (e: Event) => {
-          const { placePrediction } = e as unknown as { placePrediction: PlacePrediction };
-          if (!placePrediction) return;
-          const place = placePrediction.toPlace();
-          await place.fetchFields({ fields: ["displayName", "formattedAddress", "location", "id"] });
-          const loc = place.location;
-          if (!loc) return;
-          onSelectRef.current({
-            name: place.displayName || place.formattedAddress || "Selected location",
-            formattedAddress: place.formattedAddress || place.displayName || "",
-            lat: loc.lat(),
-            lng: loc.lng(),
-            placeId: place.id ?? null,
-          });
-        };
-        el.addEventListener("gmp-select", handler);
-      })
-      .catch(() => undefined);
-
-    return () => {
-      cancelled = true;
-      if (el && handler) el.removeEventListener("gmp-select", handler);
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    function onClickOutside(e: MouseEvent) {
+      if (containerRef.current && !containerRef.current.contains(e.target as Node)) setOpen(false);
+    }
+    document.addEventListener("mousedown", onClickOutside);
+    return () => document.removeEventListener("mousedown", onClickOutside);
   }, []);
 
-  return (
-    <div
-      ref={containerRef}
-      className={className}
-      style={
-        {
-          "--gmpx-color-surface": "var(--surface)",
-          "--gmpx-color-on-surface": "var(--foreground)",
-          "--gmpx-color-on-surface-variant": "var(--muted-foreground)",
-          "--gmpx-color-primary": "var(--primary)",
-          "--gmpx-font-family": "inherit",
-          "--gmpx-font-size-base": "0.875rem",
-        } as React.CSSProperties
+  function search(text: string) {
+    setValue(text);
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    if (!text.trim()) {
+      setSuggestions([]);
+      setOpen(false);
+      return;
+    }
+    debounceRef.current = setTimeout(async () => {
+      try {
+        const g = await loadGoogleMaps();
+        const placesLib = (await g.maps.importLibrary("places")) as unknown as {
+          AutocompleteSessionToken: new () => google.maps.places.AutocompleteSessionToken;
+          AutocompleteSuggestion: {
+            fetchAutocompleteSuggestions(req: {
+              input: string;
+              sessionToken: google.maps.places.AutocompleteSessionToken;
+            }): Promise<{ suggestions: Suggestion[] }>;
+          };
+        };
+        if (!sessionTokenRef.current) sessionTokenRef.current = new placesLib.AutocompleteSessionToken();
+        const { suggestions: results } = await placesLib.AutocompleteSuggestion.fetchAutocompleteSuggestions({
+          input: text,
+          sessionToken: sessionTokenRef.current,
+        });
+        setSuggestions(results);
+        setOpen(results.length > 0);
+      } catch {
+        setSuggestions([]);
       }
-    />
+    }, 300);
+  }
+
+  async function pick(s: Suggestion) {
+    const place = s.toPlace();
+    await place.fetchFields({ fields: ["displayName", "formattedAddress", "location", "id"] });
+    const loc = place.location;
+    if (!loc) return;
+    onSelect({
+      name: place.displayName || place.formattedAddress || s.text,
+      formattedAddress: place.formattedAddress || place.displayName || s.text,
+      lat: loc.lat(),
+      lng: loc.lng(),
+      placeId: place.id ?? null,
+    });
+    setValue(place.displayName || s.text);
+    setSuggestions([]);
+    setOpen(false);
+    // A fresh session token per completed search — matches Google's billing guidance
+    // (one token spans one search-to-selection, then starts over).
+    sessionTokenRef.current = null;
+  }
+
+  return (
+    <div ref={containerRef} className="relative">
+      <input
+        type="text"
+        value={value}
+        placeholder={placeholder}
+        className={className}
+        onChange={(e) => search(e.target.value)}
+        onFocus={() => suggestions.length > 0 && setOpen(true)}
+        onKeyDown={(e) => e.key === "Enter" && e.preventDefault()}
+      />
+      {open && suggestions.length > 0 && (
+        <ul className="absolute inset-x-0 top-full z-10 mt-1 max-h-64 overflow-y-auto rounded-xl border border-border bg-surface py-1 shadow-lg">
+          {suggestions.map((s, i) => (
+            <li key={i}>
+              <button
+                type="button"
+                onClick={() => pick(s)}
+                className="block w-full truncate px-3.5 py-2.5 text-left text-sm hover:bg-muted"
+              >
+                {s.text}
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
   );
 }
