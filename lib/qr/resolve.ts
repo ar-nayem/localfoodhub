@@ -77,6 +77,11 @@ export async function resolveQrToken(
       };
     case "REGISTRATION":
       return { ok: true, kind: "redirect", to: `/apply?ref=${token}` };
+    case "EXPLORE":
+      // Platform-level discovery — opens the "what should I eat?" quiz. Not scoped to the
+      // shop that printed it: an Explore card on a table is an invitation to browse the
+      // whole marketplace (spec Section 150).
+      return { ok: true, kind: "redirect", to: "/discover" };
     case "ORDER":
     case "PICKUP":
     case "DELIVERY": {

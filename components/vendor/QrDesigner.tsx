@@ -1,11 +1,10 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
-import { Download, Printer, Check } from "lucide-react";
+import { useCallback, useEffect, useState } from "react";
+import { Check } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Input, Label } from "@/components/ui/Input";
 import { toast } from "@/components/ui/Toast";
-import { downloadPng, downloadSvg, printCard } from "@/lib/qr/export";
 import { cn } from "@/lib/utils";
 
 interface TemplateRow {
@@ -121,11 +120,6 @@ export function QrDesigner({
     return () => clearTimeout(t);
   }, [renderPreview]);
 
-  const filename = useMemo(
-    () => `${type.toLowerCase()}-qr-${(referenceId || "card").slice(0, 6)}`,
-    [type, referenceId]
-  );
-
   async function save() {
     if (needs && !referenceId) {
       toast(`Choose a ${needs} first`, "error");
@@ -168,14 +162,22 @@ export function QrDesigner({
 
         <div className="grid flex-1 grid-cols-1 overflow-hidden sm:grid-cols-[1fr_320px]">
           {/* Live preview */}
-          <div className="flex items-center justify-center overflow-auto bg-muted/40 p-6">
+          <div className="flex flex-col items-center justify-center gap-3 overflow-auto bg-muted/40 p-6">
             {svg ? (
-              <div
-                className={cn("w-full max-w-[280px] transition-opacity", rendering && "opacity-60")}
-                // The renderer's output is our own SVG string, built server-side from the
-                // template registry — not user-authored markup.
-                dangerouslySetInnerHTML={{ __html: svg }}
-              />
+              <>
+                {/* The code in this preview encodes a placeholder token, so scanning it
+                    goes nowhere until the vendor actually creates the QR. Saying so
+                    plainly beats letting someone scan it and hit an error page. */}
+                <p className="rounded-full bg-warning/15 px-3 py-1 text-center text-xs font-semibold text-warning">
+                  Design preview — press Create QR to get a scannable code
+                </p>
+                <div
+                  className={cn("w-full max-w-[280px] transition-opacity", rendering && "opacity-60")}
+                  // The renderer's output is our own SVG string, built server-side from the
+                  // template registry — not user-authored markup.
+                  dangerouslySetInnerHTML={{ __html: svg }}
+                />
+              </>
             ) : (
               <p className="text-sm text-muted-foreground">
                 {rendering ? "Rendering preview..." : "Choose a design to preview"}
@@ -265,33 +267,16 @@ export function QrDesigner({
           </div>
         </div>
 
-        <div className="flex flex-wrap items-center gap-2 border-t border-border px-5 py-3">
+        {/* Export is deliberately not offered here: this preview's code is a placeholder,
+            so downloading or printing it would produce a card that never scans. Create the
+            QR first, then export the real thing from its card in the QR Center. */}
+        <div className="flex flex-wrap items-center gap-3 border-t border-border px-5 py-3">
           <Button onClick={save} disabled={saving || !templateId} className="flex-1 sm:flex-none">
             {saving ? "Creating..." : "Create QR"}
           </Button>
-          <button
-            onClick={() => svg && downloadSvg(svg, filename)}
-            disabled={!svg}
-            className="flex items-center gap-1.5 rounded-xl border border-border px-3 py-2 text-sm font-semibold disabled:opacity-50"
-          >
-            <Download size={15} /> SVG
-          </button>
-          <button
-            onClick={() =>
-              svg && activeTemplate && downloadPng(svg, filename, activeTemplate.print).catch(() => toast("PNG export failed", "error"))
-            }
-            disabled={!svg}
-            className="flex items-center gap-1.5 rounded-xl border border-border px-3 py-2 text-sm font-semibold disabled:opacity-50"
-          >
-            <Download size={15} /> PNG
-          </button>
-          <button
-            onClick={() => svg && activeTemplate && printCard(svg, activeTemplate.print)}
-            disabled={!svg}
-            className="flex items-center gap-1.5 rounded-xl border border-border px-3 py-2 text-sm font-semibold disabled:opacity-50"
-          >
-            <Printer size={15} /> Print / PDF
-          </button>
+          <p className="text-xs text-muted-foreground">
+            Download &amp; print become available on the code&apos;s card once it&apos;s created.
+          </p>
         </div>
       </div>
     </div>

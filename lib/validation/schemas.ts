@@ -121,6 +121,7 @@ export const generateQrSchema = z.object({
     "PROMOTION",
     "LOCATION",
     "REGISTRATION",
+    "EXPLORE",
   ]),
   shopId: z.string().optional(),
   tableId: z.string().optional(),
