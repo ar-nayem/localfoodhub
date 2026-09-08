@@ -1,12 +1,23 @@
 "use client";
 
-import { Suspense, useEffect, useState } from "react";
+import { Suspense, useEffect, useMemo, useState } from "react";
+import dynamic from "next/dynamic";
 import { useSearchParams, useRouter } from "next/navigation";
+import { Map as MapIcon, List as ListIcon } from "lucide-react";
 import { SearchBar } from "@/components/customer/SearchBar";
 import { ShopCard, type ShopCardData } from "@/components/customer/ShopCard";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { cn } from "@/lib/utils";
 import { isOrderTypeActive } from "@/lib/constants";
+import { useGeolocation } from "@/lib/location/useGeolocation";
+import { formatDistance } from "@/lib/location/distance";
+import type { MapShop } from "@/components/customer/ExploreMap";
+
+// Leaflet touches `window` at import time — client-only.
+const ExploreMap = dynamic(() => import("@/components/customer/ExploreMap").then((m) => m.ExploreMap), {
+  ssr: false,
+  loading: () => <div className="h-full w-full animate-pulse bg-muted" />,
+});
 
 const MODE_FILTERS = [
   { value: "", label: "All" },
@@ -14,6 +25,8 @@ const MODE_FILTERS = [
   { value: "pickup", label: "Pickup" },
   { value: "dine-in", label: "Dine-in" },
 ].filter((f) => isOrderTypeActive((f as { mode?: string }).mode ?? ""));
+
+type ShopWithDistance = ShopCardData & { latitude: number | null; longitude: number | null; distanceKm: number | null };
 
 export default function ExplorePage() {
   return (
@@ -30,18 +43,27 @@ function ExploreContent() {
   const mode = params.get("mode") || "";
   const category = params.get("category") || "";
 
-  const [shops, setShops] = useState<ShopCardData[] | null>(null);
+  const { coords } = useGeolocation();
+  const [shops, setShops] = useState<ShopWithDistance[] | null>(null);
+  const [view, setView] = useState<"list" | "map">("list");
+  const [selectedId, setSelectedId] = useState<string | null>(null);
 
   useEffect(() => {
     const search = new URLSearchParams();
     if (q) search.set("q", q);
     if (mode) search.set("mode", mode);
     if (category) search.set("category", category);
+    // Every result still carries a distance once we have a fix — the map isn't the only
+    // consumer of it, the plain list shows it too.
+    if (coords) {
+      search.set("lat", String(coords.lat));
+      search.set("lng", String(coords.lng));
+    }
     setShops(null);
     fetch(`/api/shops?${search.toString()}`)
       .then((r) => r.json())
       .then(setShops);
-  }, [q, mode, category]);
+  }, [q, mode, category, coords]);
 
   function setMode(next: string) {
     const search = new URLSearchParams(params.toString());
@@ -50,9 +72,52 @@ function ExploreContent() {
     router.push(`/explore?${search.toString()}`);
   }
 
+  const mapShops = useMemo<MapShop[]>(
+    () =>
+      (shops ?? []).map((s) => ({
+        id: s.id,
+        slug: s.slug,
+        name: s.name,
+        category: s.category,
+        rating: s.rating,
+        ratingCount: s.ratingCount,
+        status: s.status,
+        latitude: s.latitude,
+        longitude: s.longitude,
+        distanceKm: s.distanceKm,
+        minOrder: s.minOrder,
+      })),
+    [shops]
+  );
+
   return (
     <main className="mx-auto max-w-6xl px-4 pb-10 pt-6 sm:px-6">
-      <h1 className="mb-4 text-xl font-bold">Discover food around you</h1>
+      <div className="mb-4 flex items-center justify-between gap-3">
+        <h1 className="text-xl font-bold">Discover food around you</h1>
+        <div className="flex shrink-0 rounded-full border border-border p-0.5">
+          <button
+            onClick={() => setView("list")}
+            aria-pressed={view === "list"}
+            className={cn(
+              "flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold",
+              view === "list" ? "bg-primary text-primary-foreground" : "text-muted-foreground"
+            )}
+          >
+            <ListIcon size={14} /> List
+          </button>
+          <button
+            onClick={() => setView("map")}
+            aria-pressed={view === "map"}
+            className={cn(
+              "flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold",
+              view === "map" ? "bg-primary text-primary-foreground" : "text-muted-foreground"
+            )}
+          >
+            <MapIcon size={14} /> Map
+          </button>
+        </div>
+      </div>
+
       <SearchBar initialValue={q} />
 
       <div className="my-4 flex gap-2 overflow-x-auto pb-1">
@@ -85,11 +150,48 @@ function ExploreContent() {
         <div className="rounded-2xl border border-dashed border-border p-10 text-center text-muted-foreground">
           No food shops match your filters.
         </div>
-      ) : (
+      ) : view === "list" ? (
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {shops.map((shop) => (
-            <ShopCard key={shop.slug} shop={shop} />
+            <div key={shop.slug} className="relative">
+              <ShopCard shop={shop} />
+              {shop.distanceKm != null && (
+                <span className="pointer-events-none absolute left-3 top-3 rounded-full bg-black/60 px-2 py-0.5 text-[11px] font-medium text-white">
+                  {formatDistance(shop.distanceKm)}
+                </span>
+              )}
+            </div>
           ))}
+        </div>
+      ) : (
+        // Map view — mobile stacks list under the map; desktop splits list/map side by
+        // side. The map is never the only way to a shop: every marker's shop is also a
+        // row in this same list, one scroll away.
+        <div className="flex flex-col gap-4 lg:h-[70vh] lg:flex-row">
+          <div className="h-72 shrink-0 overflow-hidden rounded-2xl border border-border lg:order-2 lg:h-full lg:flex-1">
+            <ExploreMap shops={mapShops} userCoords={coords} selectedId={selectedId} onSelect={setSelectedId} />
+          </div>
+          <div className="flex flex-col gap-2 overflow-y-auto lg:order-1 lg:w-80 lg:shrink-0">
+            {shops.map((shop) => (
+              <button
+                key={shop.slug}
+                onClick={() => setSelectedId(shop.id)}
+                className={cn(
+                  "flex items-center gap-3 rounded-xl border p-3 text-left transition-colors",
+                  selectedId === shop.id ? "border-primary bg-primary/5" : "border-border bg-surface"
+                )}
+              >
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-sm font-semibold">{shop.name}</p>
+                  <p className="truncate text-xs text-muted-foreground">{shop.category}</p>
+                  <div className="mt-0.5 flex items-center gap-2 text-xs text-muted-foreground">
+                    <span>{shop.rating > 0 ? `★ ${shop.rating.toFixed(1)}` : "New"}</span>
+                    {shop.distanceKm != null && <span>{formatDistance(shop.distanceKm)}</span>}
+                  </div>
+                </div>
+              </button>
+            ))}
+          </div>
         </div>
       )}
     </main>

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { haversineKm } from "@/lib/location/distance";
 
 // Public shop discovery — spec Section 8. Supports the filter set the Explore page needs;
 // unrecognized filters are ignored rather than erroring (keeps this endpoint forgiving).
@@ -12,6 +13,14 @@ export async function GET(req: NextRequest) {
   // "Offers" — shops running a live promo code or holding a discounted item right now.
   const deals = params.get("deals") === "1";
   const now = new Date();
+
+  // Customer coordinates, when the caller has them (Explore map, "near me" sort). Shops
+  // without their own coordinates just fall out of distance sort/radius filtering rather
+  // than crashing the request — not every seeded shop has been geo-tagged yet.
+  const lat = params.get("lat") ? Number(params.get("lat")) : null;
+  const lng = params.get("lng") ? Number(params.get("lng")) : null;
+  const radiusKm = params.get("radiusKm") ? Number(params.get("radiusKm")) : null;
+  const hasOrigin = lat !== null && lng !== null && !Number.isNaN(lat) && !Number.isNaN(lng);
 
   const shops = await prisma.shop.findMany({
     where: {
@@ -62,5 +71,24 @@ export async function GET(req: NextRequest) {
     orderBy: { rating: "desc" },
   });
 
-  return NextResponse.json(shops);
+  if (!hasOrigin) {
+    return NextResponse.json(shops.map((s) => ({ ...s, distanceKm: null })));
+  }
+
+  const withDistance = shops
+    .map((s) => ({
+      ...s,
+      distanceKm: s.latitude != null && s.longitude != null ? haversineKm(lat!, lng!, s.latitude, s.longitude) : null,
+    }))
+    .filter((s) => radiusKm === null || s.distanceKm === null || s.distanceKm <= radiusKm)
+    // Shops without coordinates keep whatever rating-based position they had — they
+    // don't get hidden, just pushed after everything we can actually measure.
+    .sort((a, b) => {
+      if (a.distanceKm === null && b.distanceKm === null) return 0;
+      if (a.distanceKm === null) return 1;
+      if (b.distanceKm === null) return -1;
+      return a.distanceKm - b.distanceKm;
+    });
+
+  return NextResponse.json(withDistance);
 }

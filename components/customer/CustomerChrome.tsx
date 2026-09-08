@@ -2,11 +2,12 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, QrCode, ClipboardList, User, ShoppingBag, Heart, MapPin, ChevronDown, Search } from "lucide-react";
+import { Home, QrCode, ClipboardList, User, ShoppingBag, Heart, Search } from "lucide-react";
 import { Logo } from "@/components/brand/Logo";
 import { useCartStore } from "@/lib/cart/store";
 import { cn } from "@/lib/utils";
 import { NotificationBell } from "./NotificationBell";
+import { LocationPill } from "./LocationPill";
 
 // Bottom navigation. The scanner is not here — it lives at the top left of the mobile
 // header, where it must stay.
@@ -77,18 +78,7 @@ export function CustomerChrome({ children }: { children: React.ReactNode }) {
               >
                 <QrCode size={18} />
               </Link>
-              <Link href="/explore" className="flex min-w-0 items-center gap-2 text-left">
-              <span className="flex h-9 w-9 items-center justify-center rounded-full bg-primary/10 text-primary">
-                <MapPin size={17} />
-              </span>
-              <span className="leading-tight">
-                <span className="block text-[11px] text-muted-foreground">Your Location</span>
-                <span className="flex items-center gap-1 truncate text-sm font-semibold">
-                  Riverside Food Court
-                  <ChevronDown size={14} className="shrink-0 text-muted-foreground" />
-                </span>
-              </span>
-              </Link>
+              <LocationPill />
             </div>
             <div className="flex items-center gap-1.5">
               <Link

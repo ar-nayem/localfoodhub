@@ -1,9 +1,10 @@
 "use client";
 
-import { Star, Clock, X } from "lucide-react";
+import { Star, Clock, X, MapPin } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
 import { formatMoney } from "@/lib/utils";
+import { formatDistance } from "@/lib/location/distance";
 
 export interface Recommendation {
   product: {
@@ -20,6 +21,7 @@ export interface Recommendation {
     slug: string;
     name: string;
     rating: number;
+    distanceKm: number | null;
     supportsDelivery: boolean;
     supportsPickup: boolean;
     supportsDineIn: boolean;
@@ -76,6 +78,11 @@ export function ExploreResultCard({
           <span className="flex items-center gap-1 text-muted-foreground">
             <Clock size={14} /> {product.prepTimeMinutes} min
           </span>
+          {shop.distanceKm != null && (
+            <span className="flex items-center gap-1 text-muted-foreground">
+              <MapPin size={14} /> {formatDistance(shop.distanceKm)}
+            </span>
+          )}
           <span className="font-semibold text-primary">
             {formatMoney(price)}
             {people > 1 && <span className="text-muted-foreground"> · ~{formatMoney(price * people)} total</span>}

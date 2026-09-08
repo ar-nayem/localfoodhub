@@ -9,6 +9,8 @@ export interface VendorShop {
   category: string;
   description: string;
   address: string;
+  latitude?: number | null;
+  longitude?: number | null;
   phone?: string | null;
   logoUrl?: string | null;
   coverUrl?: string | null;

@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/Button";
 import { cn, formatMoney } from "@/lib/utils";
 import { PRICE_BUCKETS, MOOD_TAGS, isOrderTypeActive } from "@/lib/constants";
 import { useCartStore } from "@/lib/cart/store";
+import { useGeolocation } from "@/lib/location/useGeolocation";
 import { ExploreResultCard, type Recommendation } from "./ExploreResultCard";
 
 const PEOPLE_OPTIONS = [
@@ -54,6 +55,7 @@ export function ExploreFlow({
 }) {
   const router = useRouter();
   const setDiscoveryPick = useCartStore((s) => s.setDiscoveryPick);
+  const { coords } = useGeolocation();
   const [answers, setAnswers] = useState<Answers>({
     locationId: presetLocationId ?? null,
     budgetKey: null,
@@ -93,6 +95,10 @@ export function ExploreFlow({
     if (answers.locationId) params.set("location", answers.locationId);
     if (answers.moods.length) params.set("moods", answers.moods.join(","));
     if (exclude.length) params.set("exclude", exclude.join(","));
+    if (coords) {
+      params.set("lat", String(coords.lat));
+      params.set("lng", String(coords.lng));
+    }
 
     await new Promise((r) => setTimeout(r, 500)); // brief "finding something..." beat, not a fake long load
     const res = await fetch(`/api/discover?${params.toString()}`);

@@ -3,11 +3,18 @@
 import { isOrderTypeActive } from "@/lib/constants";
 
 import { useEffect, useState } from "react";
+import dynamic from "next/dynamic";
 import { useVendorShop } from "@/lib/vendor/useVendorShop";
 import { Button } from "@/components/ui/Button";
 import { Input, Label, Textarea } from "@/components/ui/Input";
 import { Switch } from "@/components/ui/Switch";
 import { toast } from "@/components/ui/Toast";
+
+// Leaflet touches `window` at import time, so this can only ever run client-side.
+const LocationPicker = dynamic(
+  () => import("@/components/vendor/LocationPicker").then((m) => m.LocationPicker),
+  { ssr: false, loading: () => <div className="mt-2 h-64 w-full animate-pulse rounded-xl bg-muted" /> }
+);
 
 export default function VendorSettingsPage() {
   const { shop } = useVendorShop();
@@ -20,6 +27,8 @@ export default function VendorSettingsPage() {
         name: shop.name,
         description: shop.description,
         address: shop.address,
+        latitude: shop.latitude ?? "",
+        longitude: shop.longitude ?? "",
         phone: shop.phone ?? "",
         supportsDelivery: shop.supportsDelivery,
         supportsPickup: shop.supportsPickup,
@@ -33,10 +42,15 @@ export default function VendorSettingsPage() {
 
   async function save() {
     setSaving(true);
+    const payload = {
+      ...form,
+      latitude: form.latitude === "" || form.latitude == null ? null : Number(form.latitude),
+      longitude: form.longitude === "" || form.longitude == null ? null : Number(form.longitude),
+    };
     const res = await fetch("/api/vendor/shop", {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(form),
+      body: JSON.stringify(payload),
     });
     setSaving(false);
     if (!res.ok) {
@@ -69,6 +83,22 @@ export default function VendorSettingsPage() {
           <Label>Address</Label>
           <Input value={String(form.address ?? "")} onChange={(e) => setForm({ ...form, address: e.target.value })} />
         </div>
+
+        <div>
+          <Label>Map location</Label>
+          <LocationPicker
+            latitude={form.latitude === "" || form.latitude == null ? null : Number(form.latitude)}
+            longitude={form.longitude === "" || form.longitude == null ? null : Number(form.longitude)}
+            onChange={(lat, lng) => setForm((f) => ({ ...f, latitude: lat, longitude: lng }))}
+          />
+          {(form.latitude === "" || form.latitude == null) && (
+            <p className="mt-1.5 text-xs text-muted-foreground">
+              No location set yet — customers won&apos;t see this shop on the Explore map
+              until you set one.
+            </p>
+          )}
+        </div>
+
         <div>
           <Label>Phone</Label>
           <Input value={String(form.phone ?? "")} onChange={(e) => setForm({ ...form, phone: e.target.value })} />

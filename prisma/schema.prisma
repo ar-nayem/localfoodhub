@@ -68,6 +68,12 @@ model Shop {
   logoUrl          String?
   coverUrl         String?
   address          String
+  // Precise map coordinates, separate from the shop's Location (food-court) grouping —
+  // a Location can hold several shops that still sit at different physical spots.
+  // Nullable: a shop without coordinates just doesn't appear on the Explore map or in
+  // distance-sorted results, rather than the whole feature breaking.
+  latitude         Float?
+  longitude        Float?
   phone            String?
   email            String?
   openingHours     String  @default("[]") // JSON: [{day, open, close}]
