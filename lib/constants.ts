@@ -50,6 +50,13 @@ export type QRStatus = (typeof QR_STATUSES)[number];
 export const ORDER_TYPES = ["DELIVERY", "PICKUP", "DINE_IN"] as const;
 export type OrderType = (typeof ORDER_TYPES)[number];
 
+// Customer <-> vendor messaging, one thread per order (see prisma Conversation/Message).
+export const MESSAGE_TYPES = ["TEXT", "IMAGE"] as const;
+export type MessageType = (typeof MESSAGE_TYPES)[number];
+
+export const SENDER_ROLES = ["CUSTOMER", "VENDOR"] as const;
+export type SenderRole = (typeof SENDER_ROLES)[number];
+
 /**
  * Launch feature flags.
  *

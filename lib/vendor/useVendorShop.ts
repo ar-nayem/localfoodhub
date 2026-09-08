@@ -11,6 +11,7 @@ export interface VendorShop {
   address: string;
   latitude?: number | null;
   longitude?: number | null;
+  placeId?: string | null;
   phone?: string | null;
   logoUrl?: string | null;
   coverUrl?: string | null;

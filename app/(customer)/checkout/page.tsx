@@ -23,6 +23,10 @@ export default function CheckoutPage() {
   const [pickupTime, setPickupTime] = useState<"ASAP" | "SCHEDULED">("ASAP");
   const [scheduledTime, setScheduledTime] = useState("");
   const [notes, setNotes] = useState("");
+  const [orderFor, setOrderFor] = useState<"ME" | "SOMEONE_ELSE">("ME");
+  const [recipientName, setRecipientName] = useState("");
+  const [recipientPhone, setRecipientPhone] = useState("");
+  const [recipientNote, setRecipientNote] = useState("");
   const [placing, setPlacing] = useState(false);
   const [placingStage, setPlacingStage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -66,6 +70,10 @@ export default function CheckoutPage() {
       setError("Name and phone are required.");
       return;
     }
+    if (orderFor === "SOMEONE_ELSE" && (!recipientName || !recipientPhone)) {
+      setError("Recipient name and phone are required.");
+      return;
+    }
 
     setPlacing(true);
     setError(null);
@@ -99,6 +107,9 @@ export default function CheckoutPage() {
           guestName: guestName || undefined,
           guestPhone: guestPhone || undefined,
           notes: notes || undefined,
+          recipientName: orderFor === "SOMEONE_ELSE" ? recipientName : undefined,
+          recipientPhone: orderFor === "SOMEONE_ELSE" ? recipientPhone : undefined,
+          recipientNote: orderFor === "SOMEONE_ELSE" ? recipientNote || undefined : undefined,
         }),
       });
       const order = await orderRes.json();
@@ -219,6 +230,34 @@ export default function CheckoutPage() {
           </div>
         </Section>
       )}
+
+      <Section title="Who is this order for?">
+        <div className="flex gap-2">
+          <ModeButton active={orderFor === "ME"} onClick={() => setOrderFor("ME")} label="Me" />
+          <ModeButton active={orderFor === "SOMEONE_ELSE"} onClick={() => setOrderFor("SOMEONE_ELSE")} label="Someone else" />
+        </div>
+        {orderFor === "SOMEONE_ELSE" && (
+          <div className="mt-3 flex flex-col gap-3">
+            <div>
+              <Label htmlFor="recipientName">Recipient name</Label>
+              <Input id="recipientName" value={recipientName} onChange={(e) => setRecipientName(e.target.value)} />
+            </div>
+            <div>
+              <Label htmlFor="recipientPhone">Recipient phone</Label>
+              <Input id="recipientPhone" value={recipientPhone} onChange={(e) => setRecipientPhone(e.target.value)} />
+            </div>
+            <div>
+              <Label htmlFor="recipientNote">Note for the shop (optional)</Label>
+              <Input
+                id="recipientNote"
+                value={recipientNote}
+                onChange={(e) => setRecipientNote(e.target.value)}
+                placeholder="e.g. Please call when it's ready"
+              />
+            </div>
+          </div>
+        )}
+      </Section>
 
       <Section title="Notes (optional)">
         <Textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={2} placeholder="Anything the shop should know?" />

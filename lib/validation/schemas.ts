@@ -55,6 +55,11 @@ export const createOrderSchema = z.object({
   guestName: z.string().min(1).max(100).optional(),
   guestPhone: z.string().min(3).max(30).optional(),
   notes: z.string().max(500).optional(),
+  // Set only when the customer placing the order isn't who it's for/who'll collect it.
+  // Independent of guestName/guestPhone, which stay the *orderer's* own contact info.
+  recipientName: z.string().min(1).max(100).optional(),
+  recipientPhone: z.string().min(3).max(30).optional(),
+  recipientNote: z.string().max(300).optional(),
 });
 
 export const updateOrderStatusSchema = z.object({
@@ -151,6 +156,16 @@ export const createReviewSchema = z.object({
     .max(10)
     .default([]),
 });
+
+// A message needs text or an image, never neither — an empty bubble isn't a real message.
+export const sendMessageSchema = z
+  .object({
+    text: z.string().min(1).max(2000).optional(),
+    mediaUrl: z.string().min(1).optional(),
+    mimeType: z.string().optional(),
+    fileSize: z.number().optional(),
+  })
+  .refine((d) => !!d.text || !!d.mediaUrl, { message: "Message needs text or an image" });
 
 export const experienceReviewSchema = z.object({
   experienceRating: z.number().int().min(1).max(5),

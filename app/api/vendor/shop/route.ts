@@ -31,6 +31,7 @@ export async function PATCH(req: NextRequest) {
       ...(body.address !== undefined ? { address: body.address } : {}),
       ...(body.latitude !== undefined ? { latitude: body.latitude } : {}),
       ...(body.longitude !== undefined ? { longitude: body.longitude } : {}),
+      ...(body.placeId !== undefined ? { placeId: body.placeId } : {}),
       ...(body.phone !== undefined ? { phone: body.phone } : {}),
       ...(body.logoUrl !== undefined ? { logoUrl: body.logoUrl } : {}),
       ...(body.coverUrl !== undefined ? { coverUrl: body.coverUrl } : {}),

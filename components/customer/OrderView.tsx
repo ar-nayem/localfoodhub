@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { CheckCircle2, MapPin, Clock, ShieldCheck, type LucideIcon } from "lucide-react";
+import { CheckCircle2, MapPin, Clock, ShieldCheck, Phone, MessageCircle, type LucideIcon } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
 import { formatMoney } from "@/lib/utils";
@@ -9,6 +9,7 @@ import { ORDER_STATUS_FLOW, ORDER_STATUS_LABEL, NEXT_ORDER_ACTION, isCancellable
 import { toast } from "@/components/ui/Toast";
 import { OrderReviewSection } from "./OrderReviewSection";
 import { CancelOrderDialog } from "./CancelOrderDialog";
+import { ConversationThread } from "@/components/shared/ConversationThread";
 
 interface OrderData {
   id: string;
@@ -24,6 +25,9 @@ interface OrderData {
   cancelledAt?: string | null;
   cancellationReason?: string | null;
   guestName?: string | null;
+  recipientName?: string | null;
+  recipientPhone?: string | null;
+  recipientNote?: string | null;
   shop: { name: string; phone?: string | null; slug: string };
   table?: { label: string; area: string } | null;
   deliveryAddress?: { line1: string; line2?: string | null; city: string } | null;
@@ -54,6 +58,7 @@ export function OrderView({
   const [cancelOpen, setCancelOpen] = useState(false);
   const [cancelling, setCancelling] = useState(false);
   const [cancelError, setCancelError] = useState<string | null>(null);
+  const [showThread, setShowThread] = useState(false);
 
   useEffect(() => {
     if (["COMPLETED", "CANCELLED", "DELIVERED"].includes(order.orderStatus)) return;
@@ -208,6 +213,34 @@ export function OrderView({
         </div>
       )}
 
+      {!cancelled && (
+        <div className="mt-4 flex gap-2">
+          {order.shop.phone && (
+            <a
+              href={`tel:${order.shop.phone}`}
+              className="flex flex-1 items-center justify-center gap-1.5 rounded-xl border border-border bg-surface py-2.5 text-sm font-semibold"
+            >
+              <Phone size={15} /> Call Vendor
+            </a>
+          )}
+          <button
+            onClick={() => setShowThread(true)}
+            className="flex flex-1 items-center justify-center gap-1.5 rounded-xl border border-border bg-surface py-2.5 text-sm font-semibold"
+          >
+            <MessageCircle size={15} /> Message Vendor
+          </button>
+        </div>
+      )}
+
+      {order.recipientName && (
+        <div className="mt-3 rounded-xl border border-border bg-surface px-3.5 py-2.5 text-sm">
+          <p className="text-xs text-muted-foreground">This order is for</p>
+          <p className="font-medium">{order.recipientName}</p>
+          {order.recipientPhone && <p className="text-muted-foreground">{order.recipientPhone}</p>}
+          {order.recipientNote && <p className="mt-1 text-xs italic text-muted-foreground">&ldquo;{order.recipientNote}&rdquo;</p>}
+        </div>
+      )}
+
       {order.table && (
         <InfoRow icon={MapPin} label="Table" value={`${order.table.area} · ${order.table.label}`} />
       )}
@@ -314,6 +347,10 @@ export function OrderView({
           submitting={cancelling}
           error={cancelError}
         />
+      )}
+
+      {showThread && (
+        <ConversationThread orderId={order.id} viewerRole="CUSTOMER" onClose={() => setShowThread(false)} />
       )}
     </div>
   );

@@ -37,6 +37,8 @@ model User {
   reviewVotes   ReviewHelpfulVote[]
   notifications Notification[]
   auditLogs     AuditLog[]
+  conversations Conversation[]
+  sentMessages  Message[]
 }
 
 // ───────────────────────── Locations & shops ─────────────────────────
@@ -44,10 +46,10 @@ model User {
 // A named local zone (e.g. "Riverside Food Court") that groups shops for
 // discovery and LOCATION-type QR codes.
 model Location {
-  id          String  @id @default(cuid())
-  name        String
-  slug        String  @unique
-  description String?
+  id               String  @id @default(cuid())
+  name             String
+  slug             String  @unique
+  description      String?
   // When true, this location's QR/link opens "Surprise Me" discovery scoped to this
   // location instead of the plain shop-browsing list (spec Section 134).
   promoteDiscovery Boolean @default(false)
@@ -74,6 +76,11 @@ model Shop {
   // distance-sorted results, rather than the whole feature breaking.
   latitude         Float?
   longitude        Float?
+  // Google Place ID for the shop's address, when it was set via Places Autocomplete/the
+  // map picker rather than typed free-text — lets the vendor re-open the exact same place
+  // later instead of re-geocoding the address string. Null for shops geocoded manually or
+  // seeded before Google Maps was wired in.
+  placeId          String?
   phone            String?
   email            String?
   openingHours     String  @default("[]") // JSON: [{day, open, close}]
@@ -102,17 +109,18 @@ model Shop {
   locationId String?
   location   Location? @relation(fields: [locationId], references: [id])
 
-  staff      ShopStaff[]
-  categories Category[]
-  products   Product[]
-  tables     Table[]
-  orders     Order[]
-  qrCodes    QRCode[]
-  promotions Promotion[]
-  reviews    Review[]
-  favorites  Favorite[]
-  media      Media[]
-  revisions  ShopRevision[]
+  staff         ShopStaff[]
+  categories    Category[]
+  products      Product[]
+  tables        Table[]
+  orders        Order[]
+  qrCodes       QRCode[]
+  promotions    Promotion[]
+  reviews       Review[]
+  favorites     Favorite[]
+  media         Media[]
+  revisions     ShopRevision[]
+  conversations Conversation[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -173,32 +181,32 @@ model Category {
 
 // Product.status: AVAILABLE | SOLD_OUT | HIDDEN
 model Product {
-  id              String  @id @default(cuid())
-  shopId          String
-  shop            Shop    @relation(fields: [shopId], references: [id], onDelete: Cascade)
-  categoryId      String
-  category        Category @relation(fields: [categoryId], references: [id])
-  name            String
-  description     String
-  price           Float
-  discountPrice   Float?
-  imageUrl        String?
-  status          String  @default("AVAILABLE")
-  prepTimeMinutes Int     @default(10)
-  ingredients     String  @default("[]") // JSON string[]
-  allergens       String  @default("[]") // JSON string[]
-  dietaryTags     String  @default("[]") // JSON string[] e.g. ["vegetarian","halal","spicy"]
-  sortOrder       Int     @default(0)
-  featured        Boolean @default(false) // vendor-picked: Featured / Best Sellers / Today's Special
-  discoveryEligible Boolean @default(true) // spec Section 132/135 — vendor opt-out per product
+  id                String   @id @default(cuid())
+  shopId            String
+  shop              Shop     @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  categoryId        String
+  category          Category @relation(fields: [categoryId], references: [id])
+  name              String
+  description       String
+  price             Float
+  discountPrice     Float?
+  imageUrl          String?
+  status            String   @default("AVAILABLE")
+  prepTimeMinutes   Int      @default(10)
+  ingredients       String   @default("[]") // JSON string[]
+  allergens         String   @default("[]") // JSON string[]
+  dietaryTags       String   @default("[]") // JSON string[] e.g. ["vegetarian","halal","spicy"]
+  sortOrder         Int      @default(0)
+  featured          Boolean  @default(false) // vendor-picked: Featured / Best Sellers / Today's Special
+  discoveryEligible Boolean  @default(true) // spec Section 132/135 — vendor opt-out per product
 
-  options    ProductOption[]
-  addons     ProductAddon[]
-  orderItems OrderItem[]
-  favorites  Favorite[]
-  qrCodes    QRCode[]
+  options         ProductOption[]
+  addons          ProductAddon[]
+  orderItems      OrderItem[]
+  favorites       Favorite[]
+  qrCodes         QRCode[]
   discoveryEvents DiscoveryEvent[]
-  reviews    Review[]
+  reviews         Review[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -206,9 +214,9 @@ model Product {
 
 // e.g. "Size" -> Small/Medium/Large
 model ProductOption {
-  id        String  @id @default(cuid())
+  id        String               @id @default(cuid())
   productId String
-  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  product   Product              @relation(fields: [productId], references: [id], onDelete: Cascade)
   name      String
   values    ProductOptionValue[]
 }
@@ -276,10 +284,10 @@ model Table {
 // QRCode.status: ACTIVE | INACTIVE | EXPIRED | REVOKED
 
 model QRCode {
-  id     String @id @default(cuid())
-  token  String @unique
+  id     String  @id @default(cuid())
+  token  String  @unique
   type   String
-  status String @default("ACTIVE")
+  status String  @default("ACTIVE")
   label  String? // e.g. "Table A01", "Counter", "10% OFF"
 
   shopId      String?
@@ -297,7 +305,7 @@ model QRCode {
 
   // Which design the card renders with. Purely presentational: changing it never changes
   // `token`, so a printed code keeps working after a redesign.
-  templateId String?
+  templateId  String?
   // Vendor-chosen call-to-action override; falls back to the template/type default.
   ctaOverride String?
   expiresAt   DateTime?
@@ -350,6 +358,14 @@ model Order {
   pickupTime   DateTime?
   scheduledFor DateTime?
 
+  // Set only when the customer placing the order isn't who the food is for/who'll collect
+  // it (spec: "order for someone else"). Snapshotted here at creation time — deliberately
+  // NOT a foreign key to a SavedLocation/Address row, so editing or deleting a saved
+  // contact later can never retroactively change what an already-placed order shows.
+  recipientName  String?
+  recipientPhone String?
+  recipientNote  String?
+
   subtotal    Float
   discount    Float @default(0)
   deliveryFee Float @default(0)
@@ -360,8 +376,8 @@ model Order {
   promotionId String?
   promotion   Promotion? @relation(fields: [promotionId], references: [id])
 
-  paymentStatus String @default("PENDING")
-  orderStatus   String @default("PENDING")
+  paymentStatus String  @default("PENDING")
+  orderStatus   String  @default("PENDING")
   notes         String?
 
   // Cancellation is only permitted while the shop has not accepted yet — enforced
@@ -372,17 +388,18 @@ model Order {
 
   // Optional overall-experience rating, separate from each item's own review (spec
   // Section 205-208) — service/delivery/pickup context depends on orderType.
-  experienceRating   Int?
-  serviceRating      Int?
-  experienceComment  String?
+  experienceRating     Int?
+  serviceRating        Int?
+  experienceComment    String?
   experienceReviewedAt DateTime?
 
-  items         OrderItem[]
-  statusEvents  OrderStatusEvent[]
-  payment       Payment?
-  delivery      Delivery?
-  reviews       Review[]
-  qrCode        QRCode?
+  items        OrderItem[]
+  statusEvents OrderStatusEvent[]
+  payment      Payment?
+  delivery     Delivery?
+  reviews      Review[]
+  qrCode       QRCode?
+  conversation Conversation?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -395,7 +412,7 @@ model OrderItem {
   productId       String
   product         Product @relation(fields: [productId], references: [id])
   name            String // snapshot
-  price           Float  // snapshot, incl. selected option/addon deltas
+  price           Float // snapshot, incl. selected option/addon deltas
   quantity        Int
   selectedOptions String  @default("[]") // JSON [{optionName,valueLabel,priceDelta}]
   selectedAddons  String  @default("[]") // JSON [{name,price}]
@@ -408,13 +425,13 @@ model OrderItem {
 // Payment.status / Transaction.status / Refund.status share the PaymentStatus value list above.
 
 model Payment {
-  id                   String @id @default(cuid())
-  orderId              String @unique
-  order                Order  @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  id                   String  @id @default(cuid())
+  orderId              String  @unique
+  order                Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
   amount               Float
-  currency             String @default("BDT")
-  provider             String @default("mock")
-  status               String @default("PENDING")
+  currency             String  @default("BDT")
+  provider             String  @default("mock")
+  status               String  @default("PENDING")
   transactionReference String?
 
   transactions Transaction[]
@@ -459,17 +476,34 @@ model Delivery {
   updatedAt    DateTime @updatedAt
 }
 
-// ───────────────────────── Addresses ─────────────────────────
+// ───────────────────────── Addresses / saved locations ─────────────────────────
+// Doubles as the customer's "saved locations" list (spec: Home/Work/Family/Friend/Other)
+// — a label + optional recipient identity + a real place. `userId` null means it was
+// written for a guest order and isn't reusable/listed anywhere, just kept for that one
+// order's record.
 
 model Address {
-  id     String  @id @default(cuid())
-  userId String?
-  user   User?   @relation(fields: [userId], references: [id])
-  label  String  @default("Home")
-  line1  String
-  line2  String?
-  city   String
-  notes  String?
+  id             String  @id @default(cuid())
+  userId         String?
+  user           User?   @relation(fields: [userId], references: [id])
+  label          String  @default("Home")
+  line1          String
+  line2          String?
+  city           String
+  notes          String?
+  // Set when the address came from Google Places/the map picker rather than typed
+  // free-text. All nullable — a plain-text address without coordinates still works
+  // everywhere (order creation, display), it just can't be plotted on a map or reused for
+  // distance math.
+  latitude       Float?
+  longitude      Float?
+  placeId        String?
+  // Who this saved location is *for*, if not the account holder themselves — e.g. a
+  // "Mom's place" saved location always fills in her name/phone at checkout. Independent
+  // of Order.recipientName/Phone, which is the per-order snapshot actually used once an
+  // order is placed.
+  recipientName  String?
+  recipientPhone String?
 
   orders Order[]
 
@@ -497,26 +531,26 @@ model Favorite {
 // Review.status: PENDING | PUBLISHED | HIDDEN | REJECTED — moderation-ready (Section
 // 220); this pass publishes immediately, no admin moderation queue UI.
 model Review {
-  id          String    @id @default(cuid())
-  orderItemId String    @unique
-  orderItem   OrderItem @relation(fields: [orderItemId], references: [id], onDelete: Cascade)
-  orderId     String
-  order       Order     @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  productId   String
-  product     Product   @relation(fields: [productId], references: [id], onDelete: Cascade)
-  shopId      String
-  shop        Shop      @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  id           String    @id @default(cuid())
+  orderItemId  String    @unique
+  orderItem    OrderItem @relation(fields: [orderItemId], references: [id], onDelete: Cascade)
+  orderId      String
+  order        Order     @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  productId    String
+  product      Product   @relation(fields: [productId], references: [id], onDelete: Cascade)
+  shopId       String
+  shop         Shop      @relation(fields: [shopId], references: [id], onDelete: Cascade)
   // Null for a guest order's review — the reviewer proved purchase by holding the
   // order's own unguessable link, the same credential that lets them view the order.
-  userId      String?
-  user        User?     @relation(fields: [userId], references: [id])
+  userId       String?
+  user         User?     @relation(fields: [userId], references: [id])
   reviewerName String?
 
   rating            Int
   comment           String?
-  tags              String   @default("[]") // JSON string[] e.g. ["delicious","fresh"]
-  status            String   @default("PUBLISHED")
-  helpfulCount      Int      @default(0)
+  tags              String    @default("[]") // JSON string[] e.g. ["delicious","fresh"]
+  status            String    @default("PUBLISHED")
+  helpfulCount      Int       @default(0)
   vendorResponse    String?
   vendorRespondedAt DateTime?
 
@@ -556,20 +590,20 @@ model ReviewHelpfulVote {
 
 // Promotion.type: PERCENT | FIXED | BOGO | FREE_ITEM
 model Promotion {
-  id         String  @id @default(cuid())
+  id         String    @id @default(cuid())
   shopId     String
-  shop       Shop    @relation(fields: [shopId], references: [id], onDelete: Cascade)
-  code       String? @unique
+  shop       Shop      @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  code       String?   @unique
   title      String
   type       String
   value      Float
   imageUrl   String?
-  active     Boolean @default(true)
+  active     Boolean   @default(true)
   startsAt   DateTime?
   endsAt     DateTime?
-  minOrder   Float   @default(0)
+  minOrder   Float     @default(0)
   usageLimit Int? // null = unlimited
-  usedCount  Int     @default(0)
+  usedCount  Int       @default(0)
 
   orders Order[]
   qrCode QRCode?
@@ -589,14 +623,61 @@ model DiscoveryEvent {
   createdAt DateTime @default(now())
 }
 
+// ───────────────────────── Messaging (customer <-> vendor, per order) ─────────────────────────
+// One thread per order, created lazily on first message — never pre-created at order time,
+// most orders never need it. Any staff of `shopId` may see/reply (same shop-scoped
+// authorization already used everywhere else in the vendor dashboard); the other side is
+// whoever may view the order itself (the owning customer, or — for a guest order — whoever
+// holds that order's own unguessable link, same rule as lib/orders/access.ts).
+
+model Conversation {
+  id         String  @id @default(cuid())
+  orderId    String  @unique
+  order      Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  shopId     String
+  shop       Shop    @relation(fields: [shopId], references: [id], onDelete: Cascade)
+  // Null for a guest order — there's no User row to point at, access is governed by the
+  // order link itself, same as the guest-review pattern.
+  customerId String?
+  customer   User?   @relation(fields: [customerId], references: [id])
+
+  messages Message[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// Message.senderRole: CUSTOMER | VENDOR
+// Message.messageType: TEXT | IMAGE
+model Message {
+  id             String       @id @default(cuid())
+  conversationId String
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  // Null for a guest customer's message (no User row to reference); always set for a
+  // vendor-side message (the sending staff member) and for a logged-in customer.
+  senderId       String?
+  sender         User?        @relation(fields: [senderId], references: [id])
+  senderRole     String
+  messageType    String       @default("TEXT")
+  text           String?
+  mediaUrl       String?
+  mimeType       String?
+  fileSize       Int?
+  readAt         DateTime?
+
+  createdAt DateTime @default(now())
+
+  @@index([conversationId, createdAt])
+}
+
 model Notification {
-  id        String   @id @default(cuid())
-  userId    String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  type      String
-  title     String
-  body      String
-  read      Boolean  @default(false)
+  id     String  @id @default(cuid())
+  userId String
+  user   User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type   String
+  title  String
+  body   String
+  read   Boolean @default(false)
 
   // Deep-link targets so a notification opens the thing it is about, rather than
   // being a dead card. All optional — a notification may reference none of them.
@@ -622,9 +703,9 @@ model AuditLog {
 // One row per status transition, so the customer's tracking timeline can show when each
 // step actually happened instead of inventing timestamps.
 model OrderStatusEvent {
-  id      String @id @default(cuid())
+  id      String  @id @default(cuid())
   orderId String
-  order   Order  @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  order   Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
   status  String
   note    String?
 
@@ -633,7 +714,6 @@ model OrderStatusEvent {
   @@index([orderId])
 }
 
-
 // Admin-managed state for a QR card design. The layout itself lives in code
 // (lib/qr/templates/registry.ts) because it is a rendering concern; this table holds the
 // parts an admin controls at runtime — availability, ordering, the default per QR type,
@@ -641,7 +721,7 @@ model OrderStatusEvent {
 model QRTemplate {
   id         String  @id // matches the registry key, e.g. "table-classic"
   name       String
-  type       String  // QR type this design belongs to
+  type       String // QR type this design belongs to
   active     Boolean @default(true)
   isDefault  Boolean @default(false)
   sortOrder  Int     @default(0)

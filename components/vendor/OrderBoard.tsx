@@ -1,10 +1,11 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Clock } from "lucide-react";
+import { Clock, MessageCircle } from "lucide-react";
 import { useVendorShop } from "@/lib/vendor/useVendorShop";
 import { formatMoney, cn } from "@/lib/utils";
 import { toast } from "@/components/ui/Toast";
+import { ConversationThread } from "@/components/shared/ConversationThread";
 
 interface OrderRow {
   id: string;
@@ -15,6 +16,7 @@ interface OrderRow {
   total: number;
   createdAt: string;
   guestName?: string | null;
+  recipientName?: string | null;
   notes?: string | null;
   table?: { label: string; area: string } | null;
   deliveryAddress?: { line1: string; city: string } | null;
@@ -33,6 +35,7 @@ const COLUMNS: { key: string; label: string; statuses: string[]; next?: string; 
 export function OrderBoard({ large = false }: { large?: boolean }) {
   const { shop } = useVendorShop();
   const [orders, setOrders] = useState<OrderRow[]>([]);
+  const [threadOrderId, setThreadOrderId] = useState<string | null>(null);
 
   async function load() {
     if (!shop) return;
@@ -105,20 +108,32 @@ export function OrderBoard({ large = false }: { large?: boolean }) {
                       </li>
                     ))}
                   </ul>
+                  {order.recipientName && (
+                    <p className="mt-1.5 text-xs text-muted-foreground">For: {order.recipientName}</p>
+                  )}
                   {order.notes && (
                     <p className="mt-1.5 text-xs italic text-muted-foreground">Note: {order.notes}</p>
                   )}
 
                   <div className="mt-3 flex items-center justify-between border-t border-border pt-2.5">
                     <span className="text-sm font-semibold">{formatMoney(order.total)}</span>
-                    {col.next && (
+                    <div className="flex items-center gap-2">
                       <button
-                        onClick={() => advance(order.id, col.next!)}
-                        className="rounded-lg bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground"
+                        onClick={() => setThreadOrderId(order.id)}
+                        aria-label="Message customer"
+                        className="flex h-7 w-7 items-center justify-center rounded-lg border border-border text-muted-foreground"
                       >
-                        {col.nextLabel}
+                        <MessageCircle size={14} />
                       </button>
-                    )}
+                      {col.next && (
+                        <button
+                          onClick={() => advance(order.id, col.next!)}
+                          className="rounded-lg bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground"
+                        >
+                          {col.nextLabel}
+                        </button>
+                      )}
+                    </div>
                   </div>
                 </div>
               ))}
@@ -131,6 +146,10 @@ export function OrderBoard({ large = false }: { large?: boolean }) {
           </div>
         );
       })}
+
+      {threadOrderId && (
+        <ConversationThread orderId={threadOrderId} viewerRole="VENDOR" onClose={() => setThreadOrderId(null)} />
+      )}
     </div>
   );
 }

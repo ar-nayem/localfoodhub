@@ -15,6 +15,7 @@ import {
   Palette,
   Percent,
   Star,
+  MessageCircle,
 } from "lucide-react";
 import { Logo } from "@/components/brand/Logo";
 import { cn } from "@/lib/utils";
@@ -22,6 +23,7 @@ import { cn } from "@/lib/utils";
 const NAV = [
   { href: "/vendor", label: "Overview", icon: LayoutDashboard },
   { href: "/vendor/orders", label: "Orders", icon: ClipboardList },
+  { href: "/vendor/messages", label: "Messages", icon: MessageCircle },
   { href: "/vendor/kitchen", label: "Kitchen Display", icon: UtensilsCrossed },
   { href: "/vendor/scan", label: "Scan to Verify", icon: ScanLine },
   { href: "/vendor/menu", label: "Menu", icon: Grid3x3 },

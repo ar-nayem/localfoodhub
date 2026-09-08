@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { User, ClipboardList, Heart, Bell, LifeBuoy, LogOut } from "lucide-react";
+import { User, ClipboardList, Heart, Bell, LifeBuoy, LogOut, MapPin } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 
 interface Session {
@@ -48,6 +48,7 @@ export default function ProfilePage() {
 
   const links = [
     { href: "/orders", label: "Order history", icon: ClipboardList },
+    { href: "/profile/locations", label: "Saved locations", icon: MapPin },
     { href: "/favorites", label: "Favorites", icon: Heart },
     { href: "/notifications", label: "Notifications", icon: Bell },
   ];

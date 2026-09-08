@@ -9,10 +9,17 @@ import { Button } from "@/components/ui/Button";
 import { Input, Label, Textarea } from "@/components/ui/Input";
 import { Switch } from "@/components/ui/Switch";
 import { toast } from "@/components/ui/Toast";
+import { isGoogleMapsConfigured } from "@/lib/maps/loadGoogleMaps";
+import type { PlaceResult } from "@/lib/maps/types";
 
-// Leaflet touches `window` at import time, so this can only ever run client-side.
+// Both touch `window` at import time (Leaflet directly, Google via a <script> tag), so
+// either can only ever run client-side.
 const LocationPicker = dynamic(
   () => import("@/components/vendor/LocationPicker").then((m) => m.LocationPicker),
+  { ssr: false, loading: () => <div className="mt-2 h-64 w-full animate-pulse rounded-xl bg-muted" /> }
+);
+const GoogleShopLocationPicker = dynamic(
+  () => import("@/components/vendor/GoogleShopLocationPicker").then((m) => m.GoogleShopLocationPicker),
   { ssr: false, loading: () => <div className="mt-2 h-64 w-full animate-pulse rounded-xl bg-muted" /> }
 );
 
@@ -29,6 +36,7 @@ export default function VendorSettingsPage() {
         address: shop.address,
         latitude: shop.latitude ?? "",
         longitude: shop.longitude ?? "",
+        placeId: shop.placeId ?? "",
         phone: shop.phone ?? "",
         supportsDelivery: shop.supportsDelivery,
         supportsPickup: shop.supportsPickup,
@@ -86,11 +94,22 @@ export default function VendorSettingsPage() {
 
         <div>
           <Label>Map location</Label>
-          <LocationPicker
-            latitude={form.latitude === "" || form.latitude == null ? null : Number(form.latitude)}
-            longitude={form.longitude === "" || form.longitude == null ? null : Number(form.longitude)}
-            onChange={(lat, lng) => setForm((f) => ({ ...f, latitude: lat, longitude: lng }))}
-          />
+          {isGoogleMapsConfigured() ? (
+            <GoogleShopLocationPicker
+              latitude={form.latitude === "" || form.latitude == null ? null : Number(form.latitude)}
+              longitude={form.longitude === "" || form.longitude == null ? null : Number(form.longitude)}
+              onChange={(lat, lng) => setForm((f) => ({ ...f, latitude: lat, longitude: lng }))}
+              onPlaceResolved={(place: PlaceResult) =>
+                setForm((f) => ({ ...f, address: place.formattedAddress, placeId: place.placeId ?? "" }))
+              }
+            />
+          ) : (
+            <LocationPicker
+              latitude={form.latitude === "" || form.latitude == null ? null : Number(form.latitude)}
+              longitude={form.longitude === "" || form.longitude == null ? null : Number(form.longitude)}
+              onChange={(lat, lng) => setForm((f) => ({ ...f, latitude: lat, longitude: lng }))}
+            />
+          )}
           {(form.latitude === "" || form.latitude == null) && (
             <p className="mt-1.5 text-xs text-muted-foreground">
               No location set yet — customers won&apos;t see this shop on the Explore map
