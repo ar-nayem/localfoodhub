@@ -109,15 +109,21 @@ export function VendorChrome({ children, role }: { children: React.ReactNode; ro
             </Link>
           ))}
         </nav>
-        <main className="mx-auto max-w-5xl p-4 pb-28 sm:p-6 sm:pb-6">{children}</main>
+        <main className="mx-auto max-w-5xl p-4 pb-32 sm:p-6 sm:pb-6">{children}</main>
       </div>
 
+      {/* Sits well clear of the true screen edge, not flush against it — Android Chrome's
+          own bottom toolbar (back/forward/tabs) is real on-screen chrome that a
+          `position:fixed` element close to `bottom:0` can end up rendered behind on some
+          devices, since `env(safe-area-inset-bottom)` only ever accounts for iOS's home
+          indicator, never Android's browser UI. Confirmed missing on a real Android phone
+          at the old 1.25rem offset; this clears typical toolbar heights with margin. */}
       <Link
         href="/vendor/scan"
         aria-label="Scan to verify"
         className={cn(
           "fixed inset-x-0 z-40 mx-auto flex h-16 w-16 items-center justify-center rounded-full shadow-lg shadow-primary/30 transition-transform active:scale-95 sm:hidden",
-          "bottom-[calc(1.25rem+env(safe-area-inset-bottom))]",
+          "bottom-[calc(5.5rem+env(safe-area-inset-bottom))]",
           pathname === "/vendor/scan" ? "bg-primary/20 text-primary" : "bg-primary text-primary-foreground"
         )}
       >

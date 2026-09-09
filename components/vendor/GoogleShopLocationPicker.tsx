@@ -94,11 +94,14 @@ export function GoogleShopLocationPicker({
     navigator.geolocation.getCurrentPosition(
       async (pos) => {
         const { latitude: lat, longitude: lng } = pos.coords;
-        await commit(lat, lng);
-        mapRef.current?.setCenter({ lat, lng });
-        mapRef.current?.setZoom(16);
-        if (markerRef.current) markerRef.current.position = { lat, lng };
-        setLocating(false);
+        try {
+          await commit(lat, lng);
+          mapRef.current?.setCenter({ lat, lng });
+          mapRef.current?.setZoom(16);
+          if (markerRef.current) markerRef.current.position = { lat, lng };
+        } finally {
+          setLocating(false);
+        }
       },
       () => setLocating(false),
       { timeout: 8000 }

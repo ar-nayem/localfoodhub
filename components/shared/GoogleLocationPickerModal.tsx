@@ -78,9 +78,12 @@ export function GoogleLocationPickerModal({
     setLocating(true);
     navigator.geolocation.getCurrentPosition(
       async (pos) => {
-        const place = await reverseGeocode(pos.coords.latitude, pos.coords.longitude);
-        if (place) moveTo(place);
-        setLocating(false);
+        try {
+          const place = await reverseGeocode(pos.coords.latitude, pos.coords.longitude);
+          if (place) moveTo(place);
+        } finally {
+          setLocating(false);
+        }
       },
       () => setLocating(false),
       { enableHighAccuracy: false, timeout: 8000 }
