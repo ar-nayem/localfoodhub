@@ -2,13 +2,16 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { LayoutDashboard, Store, QrCode, MapPin, LogOut, LayoutTemplate } from "lucide-react";
+import { LayoutDashboard, Store, QrCode, MapPin, LogOut, LayoutTemplate, TrendingUp, Wallet, Users } from "lucide-react";
 import { Logo } from "@/components/brand/Logo";
 import { cn } from "@/lib/utils";
 
 const NAV = [
   { href: "/admin", label: "Overview", icon: LayoutDashboard },
   { href: "/admin/shops", label: "Shops", icon: Store },
+  { href: "/admin/analytics", label: "Sales & Insights", icon: TrendingUp },
+  { href: "/admin/finance", label: "Finance", icon: Wallet },
+  { href: "/admin/customers", label: "Customers", icon: Users },
   { href: "/admin/qr", label: "QR Codes", icon: QrCode },
   { href: "/admin/qr-templates", label: "QR Templates", icon: LayoutTemplate },
   { href: "/admin/locations", label: "Locations", icon: MapPin },

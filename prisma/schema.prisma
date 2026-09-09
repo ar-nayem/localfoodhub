@@ -32,10 +32,14 @@ model User {
   // Google's stable subject id. Kept alongside email because a person can change the
   // email on their Google account — matching on the subject keeps them attached to the
   // same LocalFoodHub account when they do.
-  googleId  String? @unique
-  imageUrl  String?
-  name      String
-  role      String  @default("CUSTOMER")
+  googleId String? @unique
+  imageUrl String?
+  name     String
+  // Optional, self-reported, and only ever used in aggregate for the admin demographics
+  // view. Nothing derives it — an unfilled birthday stays genuinely unknown rather than
+  // being guessed at from order patterns.
+  dateOfBirth DateTime?
+  role        String    @default("CUSTOMER")
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
