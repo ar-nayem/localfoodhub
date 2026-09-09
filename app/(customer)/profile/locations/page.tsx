@@ -1,21 +1,13 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { MapPin, Plus, Trash2, Pencil } from "lucide-react";
+import { MapPin, Plus, Trash2, Pencil, Star } from "lucide-react";
 import { BackButton } from "@/components/customer/BackButton";
 import { toast } from "@/components/ui/Toast";
 import { useGeolocation } from "@/lib/location/useGeolocation";
 import { haversineKm, formatDistance } from "@/lib/location/distance";
 import { AddressMapPicker, type SavedAddress } from "@/components/shared/AddressMapPicker";
-import { cn } from "@/lib/utils";
-
-/** "153****2848" — same idea as masking a card number: enough to recognize which contact
- * this is, never enough to actually dial from the screen. */
-function maskPhone(phone: string): string {
-  const digits = phone.replace(/\D/g, "");
-  if (digits.length < 7) return phone;
-  return `${digits.slice(0, 3)}****${digits.slice(-4)}`;
-}
+import { cn, maskPhone } from "@/lib/utils";
 
 const LABEL_STYLES: Record<string, string> = {
   Home: "bg-primary/10 text-primary",
@@ -52,6 +44,28 @@ export default function SavedLocationsPage() {
     else toast("Could not remove this address", "error");
   }
 
+  async function setDefault(addr: SavedAddress) {
+    const res = await fetch(`/api/account/locations/${addr.id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        label: addr.label,
+        line1: addr.line1,
+        line2: addr.line2 ?? undefined,
+        city: addr.city,
+        notes: addr.notes ?? undefined,
+        latitude: addr.latitude ?? undefined,
+        longitude: addr.longitude ?? undefined,
+        placeId: addr.placeId ?? undefined,
+        recipientName: addr.recipientName ?? undefined,
+        recipientPhone: addr.recipientPhone ?? undefined,
+        isDefault: true,
+      }),
+    });
+    if (res.ok) setRows((prev) => prev?.map((r) => ({ ...r, isDefault: r.id === addr.id })) ?? null);
+    else toast("Could not set default address", "error");
+  }
+
   return (
     <main className="mx-auto max-w-lg px-4 pb-10 pt-6">
       <div className="mb-4 flex items-center gap-3">
@@ -73,6 +87,9 @@ export default function SavedLocationsPage() {
                 {r.id === closestId && (
                   <span className="rounded-full bg-success/10 px-2 py-0.5 text-[11px] font-semibold text-success">Closest</span>
                 )}
+                {r.isDefault && (
+                  <span className="rounded-full bg-warning/10 px-2 py-0.5 text-[11px] font-semibold text-warning">Default</span>
+                )}
                 {r.recipientName && <span className="text-xs font-medium text-foreground">{r.recipientName}</span>}
                 {r.recipientPhone && <span className="text-xs text-muted-foreground">{maskPhone(r.recipientPhone)}</span>}
               </div>
@@ -87,6 +104,13 @@ export default function SavedLocationsPage() {
               )}
             </div>
             <div className="flex shrink-0 flex-col items-center gap-2.5 pt-0.5">
+              <button
+                onClick={() => setDefault(r)}
+                aria-label={r.isDefault ? "Default address" : "Set as default"}
+                disabled={r.isDefault}
+              >
+                <Star size={15} className={r.isDefault ? "fill-warning text-warning" : "text-border hover:text-muted-foreground"} />
+              </button>
               <button onClick={() => setEditing(r)} aria-label="Edit" className="text-muted-foreground hover:text-foreground">
                 <Pencil size={15} />
               </button>

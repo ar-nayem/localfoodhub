@@ -10,6 +10,7 @@ import { BackButton } from "@/components/customer/BackButton";
 import { isOrderTypeActive } from "@/lib/constants";
 import { formatMoney, cn } from "@/lib/utils";
 import { toast } from "@/components/ui/Toast";
+import type { SavedAddress } from "@/components/shared/AddressMapPicker";
 
 export default function CheckoutPage() {
   const router = useRouter();
@@ -17,6 +18,8 @@ export default function CheckoutPage() {
   const [idempotencyKey] = useState(() => crypto.randomUUID());
   const [guestName, setGuestName] = useState("");
   const [guestPhone, setGuestPhone] = useState("");
+  const [savedAddresses, setSavedAddresses] = useState<SavedAddress[] | null>(null);
+  const [selectedAddressId, setSelectedAddressId] = useState<string | null>(null);
   const [addressLine1, setAddressLine1] = useState("");
   const [addressLine2, setAddressLine2] = useState("");
   const [city, setCity] = useState("");
@@ -50,6 +53,33 @@ export default function CheckoutPage() {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [cart.orderMode]);
+
+  // Signed-in customers get their saved contacts here instead of retyping name/phone every
+  // order — a 401 just means "guest," not an error, so it's swallowed rather than shown.
+  useEffect(() => {
+    fetch("/api/account/locations")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((rows: SavedAddress[] | null) => {
+        if (!rows || rows.length === 0) return;
+        setSavedAddresses(rows);
+        const preferred = rows.find((r) => r.isDefault) ?? rows[0];
+        if (preferred.recipientName || preferred.recipientPhone) {
+          setSelectedAddressId(preferred.id);
+          setGuestName((v) => v || preferred.recipientName || "");
+          setGuestPhone((v) => v || preferred.recipientPhone || "");
+        }
+      })
+      .catch(() => undefined);
+    // Only ever runs once on mount — picking a different saved contact below updates the
+    // fields directly rather than re-triggering this fetch.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  function useSavedAddress(addr: SavedAddress) {
+    setSelectedAddressId(addr.id);
+    setGuestName(addr.recipientName || "");
+    setGuestPhone(addr.recipientPhone || "");
+  }
 
   const canSelectMode = cart.orderMode !== "DINE_IN";
 
@@ -218,6 +248,23 @@ export default function CheckoutPage() {
 
       {cart.orderMode !== "DINE_IN" && (
         <Section title="Contact Details">
+          {savedAddresses && savedAddresses.length > 0 && (
+            <div className="mb-3 flex gap-2 overflow-x-auto pb-1">
+              {savedAddresses.map((addr) => (
+                <button
+                  key={addr.id}
+                  onClick={() => useSavedAddress(addr)}
+                  className={cn(
+                    "whitespace-nowrap rounded-full border px-3.5 py-1.5 text-xs font-semibold",
+                    selectedAddressId === addr.id ? "border-primary bg-primary/10 text-primary" : "border-border text-muted-foreground"
+                  )}
+                >
+                  {addr.label}
+                  {addr.isDefault && " · Default"}
+                </button>
+              ))}
+            </div>
+          )}
           <div className="flex flex-col gap-3">
             <div>
               <Label htmlFor="name">Name</Label>

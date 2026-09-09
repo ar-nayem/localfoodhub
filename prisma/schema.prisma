@@ -504,6 +504,11 @@ model Address {
   // order is placed.
   recipientName  String?
   recipientPhone String?
+  // The one address that auto-fills checkout and shows first in the picker — the
+  // customer's own choice, never inferred. At most one true per userId, enforced in the
+  // API layer (a transaction clears the previous default before setting a new one) rather
+  // than in the schema, since Prisma/SQLite has no partial-unique-index for "true only".
+  isDefault      Boolean @default(false)
 
   orders Order[]
 

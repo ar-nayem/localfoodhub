@@ -22,6 +22,7 @@ export interface SavedAddress {
   placeId: string | null;
   recipientName: string | null;
   recipientPhone: string | null;
+  isDefault: boolean;
 }
 
 const LABEL_OPTIONS = ["Home", "Work", "School", "Other"];

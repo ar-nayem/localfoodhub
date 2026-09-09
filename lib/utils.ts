@@ -35,3 +35,11 @@ export function safeJsonParse<T>(value: string | null | undefined, fallback: T):
     return fallback;
   }
 }
+
+/** "153****2848" — enough to recognize which saved contact this is, never enough to
+ * actually dial from the screen. */
+export function maskPhone(phone: string): string {
+  const digits = phone.replace(/\D/g, "");
+  if (digits.length < 7) return phone;
+  return `${digits.slice(0, 3)}****${digits.slice(-4)}`;
+}

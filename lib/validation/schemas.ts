@@ -187,4 +187,5 @@ export const upsertLocationSchema = z.object({
   placeId: z.string().optional(),
   recipientName: z.string().max(100).optional(),
   recipientPhone: z.string().max(30).optional(),
+  isDefault: z.boolean().optional(),
 });

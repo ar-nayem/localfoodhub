@@ -21,7 +21,7 @@ const MOBILE_NAV = [
 
 /** Routes that render their own full-bleed mobile header (shop page, product detail,
  * order tracking) and should not get the standard location bar stacked above them. */
-const MOBILE_BARE_HEADER = ["/s/", "/orders/", "/cart", "/checkout", "/scan", "/discover"];
+const MOBILE_BARE_HEADER = ["/s/", "/orders/", "/cart", "/checkout", "/scan", "/discover", "/location"];
 
 export function CustomerChrome({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
