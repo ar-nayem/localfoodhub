@@ -1,22 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
-import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/auth";
+import { upsertLocationSchema } from "@/lib/validation/schemas";
 
-// Saved locations (spec: Home/Work/Family/...) — reuses the Address model, which already
-// carries everything this needs (label, place, recipient identity) rather than a
-// parallel table. Signed-in customers only: a guest has no account to save these against.
-const upsertLocationSchema = z.object({
-  label: z.string().min(1).max(40),
-  line1: z.string().min(1).max(200),
-  line2: z.string().max(200).optional(),
-  city: z.string().min(1).max(100),
-  latitude: z.number().optional(),
-  longitude: z.number().optional(),
-  placeId: z.string().optional(),
-  recipientName: z.string().max(100).optional(),
-  recipientPhone: z.string().max(30).optional(),
-});
+// Signed-in customers only: a guest has no account to save these against.
 
 export async function GET() {
   const session = await getSession();

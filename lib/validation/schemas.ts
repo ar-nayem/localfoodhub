@@ -172,3 +172,19 @@ export const experienceReviewSchema = z.object({
   serviceRating: z.number().int().min(1).max(5).optional(),
   experienceComment: z.string().max(2000).optional(),
 });
+
+// Saved locations (spec: Home/Work/Family/...) — reuses the Address model, which already
+// carries everything this needs (label, place, recipient identity) rather than a
+// parallel table. Shared between the create (POST) and edit (PATCH) routes.
+export const upsertLocationSchema = z.object({
+  label: z.string().min(1).max(40),
+  line1: z.string().min(1).max(200),
+  line2: z.string().max(200).optional(),
+  city: z.string().min(1).max(100),
+  notes: z.string().max(200).optional(),
+  latitude: z.number().optional(),
+  longitude: z.number().optional(),
+  placeId: z.string().optional(),
+  recipientName: z.string().max(100).optional(),
+  recipientPhone: z.string().max(30).optional(),
+});
