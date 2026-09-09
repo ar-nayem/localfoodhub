@@ -12,9 +12,15 @@ export async function POST(req: NextRequest) {
 
   const result = await requestOtp(id);
   if (!result.ok) {
+    if (result.reason === "RATE_LIMITED") {
+      return NextResponse.json(
+        { error: "Too many codes requested. Wait a few minutes and try again." },
+        { status: 429 }
+      );
+    }
     return NextResponse.json(
-      { error: "Too many codes requested. Wait a few minutes and try again." },
-      { status: 429 }
+      { error: "We couldn't send your code right now. Please try again shortly." },
+      { status: 502 }
     );
   }
 

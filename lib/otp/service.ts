@@ -38,7 +38,7 @@ export function resolveIdentifier(raw: string): ResolvedIdentifier | null {
   return { channel: "PHONE", destination: digits };
 }
 
-export type RequestOtpResult = { ok: true } | { ok: false; reason: "RATE_LIMITED" };
+export type RequestOtpResult = { ok: true } | { ok: false; reason: "RATE_LIMITED" | "DELIVERY_FAILED" };
 
 /** Issues a code and hands it to the delivery provider. The code is returned to nobody —
  * it exists in memory here, as a bcrypt hash in the row, and in whatever the provider
@@ -70,12 +70,23 @@ export async function requestOtp(id: ResolvedIdentifier): Promise<RequestOtpResu
     },
   });
 
-  await otpProvider.send({
-    channel: id.channel,
-    destination: id.destination,
-    code,
-    expiresInMinutes: EXPIRY_MINUTES,
-  });
+  try {
+    await otpProvider.send({
+      channel: id.channel,
+      destination: id.destination,
+      code,
+      expiresInMinutes: EXPIRY_MINUTES,
+    });
+  } catch (err) {
+    // Telling someone "check your inbox" when the send was rejected leaves them waiting on
+    // a code that will never arrive. Burn the code and report the failure instead.
+    console.error("[otp] delivery failed:", err);
+    await prisma.otpCode.updateMany({
+      where: { destination: id.destination, consumedAt: null },
+      data: { consumedAt: new Date() },
+    });
+    return { ok: false, reason: "DELIVERY_FAILED" };
+  }
 
   return { ok: true };
 }

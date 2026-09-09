@@ -29,8 +29,13 @@ model User {
   email        String? @unique
   phone        String? @unique
   passwordHash String?
-  name         String
-  role         String  @default("CUSTOMER")
+  // Google's stable subject id. Kept alongside email because a person can change the
+  // email on their Google account — matching on the subject keeps them attached to the
+  // same LocalFoodHub account when they do.
+  googleId  String? @unique
+  imageUrl  String?
+  name      String
+  role      String  @default("CUSTOMER")
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 

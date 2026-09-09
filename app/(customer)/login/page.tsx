@@ -8,6 +8,7 @@ import { Input, Label } from "@/components/ui/Input";
 import { Logo } from "@/components/brand/Logo";
 import { toast } from "@/components/ui/Toast";
 import { cn } from "@/lib/utils";
+import { GoogleSignInButton } from "@/components/customer/GoogleSignInButton";
 
 export default function LoginPage() {
   return (
@@ -19,12 +20,22 @@ export default function LoginPage() {
 
 type Method = "OTP" | "PASSWORD";
 
+// The Google callback can only hand information back through the URL, since it arrives as
+// a browser redirect rather than a fetch.
+const OAUTH_ERRORS: Record<string, string> = {
+  google_unavailable: "Google sign-in isn't set up yet. Use a code or password instead.",
+  google_denied: "Google sign-in was cancelled.",
+  google_state: "That sign-in link expired. Please try again.",
+  google_failed: "Google sign-in didn't complete. Please try again.",
+  google_unverified: "That Google account's email isn't verified.",
+};
+
 function LoginForm() {
   const router = useRouter();
   const params = useSearchParams();
   const [method, setMethod] = useState<Method>("OTP");
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(OAUTH_ERRORS[params.get("error") ?? ""] ?? null);
 
   // Password sign-in
   const [email, setEmail] = useState("");
@@ -119,6 +130,14 @@ function LoginForm() {
         <p className="mb-5 text-center text-sm text-muted-foreground">
           Customers, shop owners, and staff all sign in here.
         </p>
+
+        <GoogleSignInButton next={params.get("next")} />
+
+        <div className="my-5 flex items-center gap-3">
+          <span className="h-px flex-1 bg-border" />
+          <span className="text-xs font-medium text-muted-foreground">or</span>
+          <span className="h-px flex-1 bg-border" />
+        </div>
 
         <div className="mb-5 flex rounded-full border border-border p-0.5">
           {(["OTP", "PASSWORD"] as Method[]).map((m) => (

@@ -6,6 +6,7 @@ import Link from "next/link";
 import { Button } from "@/components/ui/Button";
 import { Input, Label } from "@/components/ui/Input";
 import { Logo } from "@/components/brand/Logo";
+import { GoogleSignInButton } from "@/components/customer/GoogleSignInButton";
 import { toast } from "@/components/ui/Toast";
 
 export default function RegisterPage() {
@@ -43,9 +44,17 @@ export default function RegisterPage() {
           <Logo />
         </div>
         <h1 className="text-center text-lg font-semibold">Create your account</h1>
-        <p className="mb-6 text-center text-sm text-muted-foreground">
+        <p className="mb-5 text-center text-sm text-muted-foreground">
           Or just browse and order as a guest — an account isn&apos;t required.
         </p>
+
+        <GoogleSignInButton label="Sign up with Google" />
+
+        <div className="my-5 flex items-center gap-3">
+          <span className="h-px flex-1 bg-border" />
+          <span className="text-xs font-medium text-muted-foreground">or</span>
+          <span className="h-px flex-1 bg-border" />
+        </div>
 
         <Label htmlFor="name">Name</Label>
         <Input
