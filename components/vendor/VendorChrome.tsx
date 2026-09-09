@@ -40,6 +40,10 @@ export function VendorChrome({ children, role }: { children: React.ReactNode; ro
   const pathname = usePathname();
   const router = useRouter();
   const nav = NAV.filter((item) => !item.ownerOnly || role === "SHOP_OWNER");
+  // Scanning is this app's marquee action for staff on the floor — it gets its own
+  // thumb-reach FAB on mobile instead of sitting buried in the scrollable tab strip, so it
+  // stays in the tab list for desktop (see sidebar below) but drops out of the mobile one.
+  const mobileNav = nav.filter((item) => item.href !== "/vendor/scan");
 
   async function logout() {
     await fetch("/api/auth/logout", { method: "POST" });
@@ -92,7 +96,7 @@ export function VendorChrome({ children, role }: { children: React.ReactNode; ro
           </button>
         </header>
         <nav className="flex gap-1 overflow-x-auto border-b border-border bg-surface px-2 sm:hidden">
-          {nav.map(({ href, label }) => (
+          {mobileNav.map(({ href, label }) => (
             <Link
               key={href}
               href={href}
@@ -105,8 +109,20 @@ export function VendorChrome({ children, role }: { children: React.ReactNode; ro
             </Link>
           ))}
         </nav>
-        <main className="mx-auto max-w-5xl p-4 sm:p-6">{children}</main>
+        <main className="mx-auto max-w-5xl p-4 pb-28 sm:p-6 sm:pb-6">{children}</main>
       </div>
+
+      <Link
+        href="/vendor/scan"
+        aria-label="Scan to verify"
+        className={cn(
+          "fixed inset-x-0 z-40 mx-auto flex h-16 w-16 items-center justify-center rounded-full shadow-lg shadow-primary/30 transition-transform active:scale-95 sm:hidden",
+          "bottom-[calc(1.25rem+env(safe-area-inset-bottom))]",
+          pathname === "/vendor/scan" ? "bg-primary/20 text-primary" : "bg-primary text-primary-foreground"
+        )}
+      >
+        <ScanLine size={28} />
+      </Link>
     </div>
   );
 }
