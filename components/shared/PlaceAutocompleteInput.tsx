@@ -4,14 +4,19 @@ import { useEffect, useRef, useState } from "react";
 import { loadGoogleMaps } from "@/lib/maps/loadGoogleMaps";
 import type { PlaceResult } from "@/lib/maps/types";
 
+// The suggestion's display text and the ability to resolve a full place both live under
+// `.placePrediction`, not on the suggestion object itself — confirmed against the live API
+// response (not just docs) after the flat-shape version silently rendered blank rows.
 interface Suggestion {
-  text: string;
-  toPlace(): {
-    fetchFields(opts: { fields: string[] }): Promise<void>;
-    displayName?: string | null;
-    formattedAddress?: string | null;
-    id?: string | null;
-    location?: { lat(): number; lng(): number } | null;
+  placePrediction: {
+    text: { text: string; toString(): string };
+    toPlace(): {
+      fetchFields(opts: { fields: string[] }): Promise<void>;
+      displayName?: string | null;
+      formattedAddress?: string | null;
+      id?: string | null;
+      location?: { lat(): number; lng(): number } | null;
+    };
   };
 }
 
@@ -79,25 +84,30 @@ export function PlaceAutocompleteInput({
         });
         setSuggestions(results);
         setOpen(results.length > 0);
-      } catch {
+      } catch (err) {
+        // A silent catch here is what let the earlier `.text`/`.toPlace()` shape bug hide
+        // for a full round of live testing — the search always looked "empty," never
+        // "broken." Real failures (quota, network) should be visible in the console too.
+        console.error("Places autocomplete failed:", err);
         setSuggestions([]);
       }
     }, 300);
   }
 
   async function pick(s: Suggestion) {
-    const place = s.toPlace();
+    const predictionText = s.placePrediction.text.text;
+    const place = s.placePrediction.toPlace();
     await place.fetchFields({ fields: ["displayName", "formattedAddress", "location", "id"] });
     const loc = place.location;
     if (!loc) return;
     onSelect({
-      name: place.displayName || place.formattedAddress || s.text,
-      formattedAddress: place.formattedAddress || place.displayName || s.text,
+      name: place.displayName || place.formattedAddress || predictionText,
+      formattedAddress: place.formattedAddress || place.displayName || predictionText,
       lat: loc.lat(),
       lng: loc.lng(),
       placeId: place.id ?? null,
     });
-    setValue(place.displayName || s.text);
+    setValue(place.displayName || predictionText);
     setSuggestions([]);
     setOpen(false);
     // A fresh session token per completed search — matches Google's billing guidance
@@ -125,7 +135,7 @@ export function PlaceAutocompleteInput({
                 onClick={() => pick(s)}
                 className="block w-full truncate px-3.5 py-2.5 text-left text-sm hover:bg-muted"
               >
-                {s.text}
+                {s.placePrediction.text.text}
               </button>
             </li>
           ))}
