@@ -2,12 +2,12 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { MapPin, ChevronDown, X, Navigation, Search } from "lucide-react";
+import { MapPin, ChevronDown } from "lucide-react";
 import { useGeolocation } from "@/lib/location/useGeolocation";
 import { SERVICE_AREA_RADIUS_KM } from "@/lib/location/distance";
 import { isGoogleMapsConfigured } from "@/lib/maps/loadGoogleMaps";
 import { reverseGeocode } from "@/lib/maps/geocode";
-import { PlaceAutocompleteInput } from "@/components/shared/PlaceAutocompleteInput";
+import { LocationSearchSheet } from "@/components/shared/LocationSearchSheet";
 import type { PlaceResult } from "@/lib/maps/types";
 
 interface LocationRow {
@@ -114,54 +114,29 @@ export function LocationPill() {
       </button>
 
       {picking && (
-        <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 sm:items-center" onClick={() => setPicking(false)}>
-          <div
-            className="w-full max-w-sm rounded-t-2xl bg-surface p-5 sm:rounded-2xl"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="mb-3 flex items-center justify-between">
-              <h2 className="text-lg font-semibold">Choose your location</h2>
-              <button onClick={() => setPicking(false)} aria-label="Close">
-                <X size={20} />
-              </button>
-            </div>
-
-            <button
-              onClick={() => {
-                refresh();
-                setPicking(false);
-              }}
-              className="mb-3 flex w-full items-center gap-2 rounded-xl border border-primary/30 bg-primary/5 px-3.5 py-2.5 text-sm font-medium text-primary"
-            >
-              <Navigation size={15} /> Use my current location
-            </button>
-
-            {googleReady && (
-              <div className="relative mb-3">
-                <Search size={15} className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
-                <PlaceAutocompleteInput
-                  placeholder="Search for a place..."
-                  onSelect={pickPlace}
-                  className="h-11 w-full rounded-xl border border-border bg-background pl-9 pr-3.5 text-sm outline-none focus:border-primary"
-                />
-              </div>
-            )}
-
-            {status === "denied" && (
-              <p className="mb-3 rounded-xl bg-muted px-3 py-2 text-xs text-muted-foreground">
+        <LocationSearchSheet
+          title="Choose your location"
+          onClose={() => setPicking(false)}
+          onPlaceSelected={pickPlace}
+          onUseCurrentLocation={() => {
+            refresh();
+            setPicking(false);
+          }}
+          notice={
+            status === "denied" ? (
+              <p className="rounded-xl bg-muted px-3 py-2 text-xs text-muted-foreground">
                 Location access was denied — {googleReady ? "search above, or " : ""}pick an
                 area below, or allow location access in your browser to detect it automatically.
               </p>
-            )}
-
-            {!googleReady && status === "granted" && outOfRange && !resolvedName && (
-              <p className="mb-3 rounded-xl bg-muted px-3 py-2 text-xs text-muted-foreground">
+            ) : !googleReady && status === "granted" && outOfRange && !resolvedName ? (
+              <p className="rounded-xl bg-muted px-3 py-2 text-xs text-muted-foreground">
                 We couldn&apos;t find a food court near your current location — pick an area
                 below to browse it anyway.
               </p>
-            )}
-
-            {!locations ? (
+            ) : undefined
+          }
+          fallback={
+            !locations ? (
               <p className="py-6 text-center text-sm text-muted-foreground">Loading areas...</p>
             ) : locations.length === 0 ? (
               <p className="py-6 text-center text-sm text-muted-foreground">No areas available yet.</p>
@@ -179,9 +154,9 @@ export function LocationPill() {
                   </Link>
                 ))}
               </div>
-            )}
-          </div>
-        </div>
+            )
+          }
+        />
       )}
     </>
   );

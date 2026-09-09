@@ -3,7 +3,7 @@
 import { Suspense, useEffect, useMemo, useState } from "react";
 import dynamic from "next/dynamic";
 import { useSearchParams, useRouter } from "next/navigation";
-import { Map as MapIcon, List as ListIcon, MapPinOff, Navigation, Search, X, ChevronDown } from "lucide-react";
+import { Map as MapIcon, List as ListIcon, MapPinOff, Navigation, ChevronDown } from "lucide-react";
 import { SearchBar } from "@/components/customer/SearchBar";
 import { ShopCard, type ShopCardData } from "@/components/customer/ShopCard";
 import { Skeleton } from "@/components/ui/Skeleton";
@@ -12,7 +12,7 @@ import { isOrderTypeActive } from "@/lib/constants";
 import { useGeolocation } from "@/lib/location/useGeolocation";
 import { formatDistance, SERVICE_AREA_RADIUS_KM } from "@/lib/location/distance";
 import { isGoogleMapsConfigured } from "@/lib/maps/loadGoogleMaps";
-import { PlaceAutocompleteInput } from "@/components/shared/PlaceAutocompleteInput";
+import { LocationSearchSheet } from "@/components/shared/LocationSearchSheet";
 import type { PlaceResult } from "@/lib/maps/types";
 import type { MapShop } from "@/components/customer/ExploreMap";
 
@@ -265,35 +265,20 @@ function ExploreContent() {
       )}
 
       {pickingOrigin && (
-        <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 sm:items-center" onClick={() => setPickingOrigin(false)}>
-          <div className="w-full max-w-sm rounded-t-2xl bg-surface p-5 sm:rounded-2xl" onClick={(e) => e.stopPropagation()}>
-            <div className="mb-3 flex items-center justify-between">
-              <h2 className="text-lg font-semibold">Explore around</h2>
-              <button onClick={() => setPickingOrigin(false)} aria-label="Close">
-                <X size={20} />
-              </button>
-            </div>
-            <button
-              onClick={() => {
-                setExploreOrigin(null);
-                setPickingOrigin(false);
-              }}
-              className="mb-3 flex w-full items-center gap-2 rounded-xl border border-primary/30 bg-primary/5 px-3.5 py-2.5 text-sm font-medium text-primary"
-            >
-              <Navigation size={15} /> Use my current location
-            </button>
-            {googleReady && (
-              <div className="relative">
-                <Search size={15} className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
-                <PlaceAutocompleteInput
-                  placeholder="Search any city or area..."
-                  onSelect={pickOrigin}
-                  className="h-11 w-full rounded-xl border border-border bg-background pl-9 pr-3.5 text-sm outline-none focus:border-primary"
-                />
-              </div>
-            )}
-          </div>
-        </div>
+        <LocationSearchSheet
+          title="Explore around"
+          onClose={() => setPickingOrigin(false)}
+          onPlaceSelected={pickOrigin}
+          onUseCurrentLocation={() => {
+            setExploreOrigin(null);
+            setPickingOrigin(false);
+          }}
+          fallback={
+            <p className="py-4 text-center text-sm text-muted-foreground">
+              Search needs location search to be configured — use your current location for now.
+            </p>
+          }
+        />
       )}
     </main>
   );
