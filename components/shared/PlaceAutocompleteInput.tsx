@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { Loader2 } from "lucide-react";
 import { loadGoogleMaps } from "@/lib/maps/loadGoogleMaps";
 import type { PlaceResult } from "@/lib/maps/types";
 
@@ -45,6 +46,7 @@ export function PlaceAutocompleteInput({
   const [value, setValue] = useState("");
   const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
   const [open, setOpen] = useState(false);
+  const [searching, setSearching] = useState(false);
   const sessionTokenRef = useRef<google.maps.places.AutocompleteSessionToken | null>(null);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -57,14 +59,23 @@ export function PlaceAutocompleteInput({
     return () => document.removeEventListener("mousedown", onClickOutside);
   }, []);
 
+  // Warm the Maps script up front rather than on the first keystroke — cold-loading it
+  // mid-search added ~2s of dead air before any result appeared, which reads as "search is
+  // broken," not "search is loading."
+  useEffect(() => {
+    loadGoogleMaps().catch(() => undefined);
+  }, []);
+
   function search(text: string) {
     setValue(text);
     if (debounceRef.current) clearTimeout(debounceRef.current);
     if (!text.trim()) {
       setSuggestions([]);
       setOpen(false);
+      setSearching(false);
       return;
     }
+    setSearching(true);
     debounceRef.current = setTimeout(async () => {
       try {
         const g = await loadGoogleMaps();
@@ -90,6 +101,8 @@ export function PlaceAutocompleteInput({
         // "broken." Real failures (quota, network) should be visible in the console too.
         console.error("Places autocomplete failed:", err);
         setSuggestions([]);
+      } finally {
+        setSearching(false);
       }
     }, 300);
   }
@@ -126,6 +139,14 @@ export function PlaceAutocompleteInput({
         onFocus={() => suggestions.length > 0 && setOpen(true)}
         onKeyDown={(e) => e.key === "Enter" && e.preventDefault()}
       />
+      {searching && (
+        <Loader2 size={16} className="absolute right-3.5 top-1/2 -translate-y-1/2 animate-spin text-muted-foreground" />
+      )}
+      {searching && suggestions.length === 0 && value.trim().length > 0 && (
+        <div className="absolute inset-x-0 top-full z-10 mt-1 rounded-xl border border-border bg-surface px-3.5 py-3 text-sm text-muted-foreground shadow-lg">
+          Searching...
+        </div>
+      )}
       {open && suggestions.length > 0 && (
         <ul className="absolute inset-x-0 top-full z-10 mt-1 max-h-64 overflow-y-auto rounded-xl border border-border bg-surface py-1 shadow-lg">
           {suggestions.map((s, i) => (
