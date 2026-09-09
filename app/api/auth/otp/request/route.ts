@@ -1,0 +1,25 @@
+import { NextRequest, NextResponse } from "next/server";
+import { resolveIdentifier, requestOtp } from "@/lib/otp/service";
+
+export async function POST(req: NextRequest) {
+  const body = await req.json().catch(() => null);
+  const raw = typeof body?.identifier === "string" ? body.identifier : "";
+
+  const id = resolveIdentifier(raw);
+  if (!id) {
+    return NextResponse.json({ error: "Enter a valid email address or phone number" }, { status: 400 });
+  }
+
+  const result = await requestOtp(id);
+  if (!result.ok) {
+    return NextResponse.json(
+      { error: "Too many codes requested. Wait a few minutes and try again." },
+      { status: 429 }
+    );
+  }
+
+  // Says nothing about whether an account exists — the same response either way, so this
+  // endpoint can't be used to test which emails or numbers are registered. Whether it's a
+  // sign-in or a sign-up is settled at verify time.
+  return NextResponse.json({ ok: true, channel: id.channel, destination: id.destination });
+}

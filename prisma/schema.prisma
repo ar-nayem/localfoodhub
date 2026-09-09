@@ -20,12 +20,17 @@ datasource db {
 // Role: SUPER_ADMIN | ADMIN | SHOP_OWNER | SHOP_STAFF | KITCHEN_STAFF | DELIVERY_STAFF | CUSTOMER
 
 model User {
-  id           String   @id @default(cuid())
-  email        String   @unique
-  passwordHash String
+  id String @id @default(cuid())
+  // An account is identified by email, phone, or both — OTP sign-in means someone can
+  // arrive with only a phone and never set a password, so all three are nullable. At
+  // least one of email/phone is always present, enforced at the API layer (SQLite has no
+  // CHECK constraint support through Prisma). Nullable + @unique is fine: SQLite allows
+  // many NULLs in a unique column, so unclaimed contacts never collide.
+  email        String? @unique
+  phone        String? @unique
+  passwordHash String?
   name         String
-  phone        String?
-  role         String   @default("CUSTOMER")
+  role         String  @default("CUSTOMER")
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
@@ -39,6 +44,29 @@ model User {
   auditLogs     AuditLog[]
   conversations Conversation[]
   sentMessages  Message[]
+}
+
+// A one-time sign-in code sent to an email address or phone number.
+//
+// `codeHash` is a bcrypt hash, never the code itself: this table is as readable as any
+// other row to anything with DB access, and a plaintext code there would be a standing
+// account-takeover primitive for every pending login. Rows are kept after use (consumedAt)
+// rather than deleted, so the recent-request count that rate-limits a destination can't be
+// reset just by burning a code.
+model OtpCode {
+  id String @id @default(cuid())
+  // Normalized email address or phone number this code was sent to.
+  destination String
+  channel     String
+  codeHash    String
+  expiresAt   DateTime
+  consumedAt  DateTime?
+  // Wrong guesses so far — a code is dead once this hits the cap, so a 6-digit code
+  // can't be walked through by brute force.
+  attempts  Int      @default(0)
+  createdAt DateTime @default(now())
+
+  @@index([destination, createdAt])
 }
 
 // ───────────────────────── Locations & shops ─────────────────────────

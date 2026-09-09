@@ -19,15 +19,32 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "An account with this email already exists" }, { status: 409 });
   }
 
+  // Phone is unique now that it can identify an account for OTP sign-in, so a blank field
+  // has to become NULL rather than "" — many accounts can have no phone, but they can't
+  // all share the same empty string.
+  const normalizedPhone = phone?.trim() ? phone.trim() : null;
+  if (normalizedPhone) {
+    const phoneTaken = await prisma.user.findUnique({ where: { phone: normalizedPhone } });
+    if (phoneTaken) {
+      return NextResponse.json({ error: "An account with this phone number already exists" }, { status: 409 });
+    }
+  }
+
   const user = await prisma.user.create({
-    data: { name, email, phone, passwordHash: await hashPassword(password), role: "CUSTOMER" },
+    data: {
+      name,
+      email,
+      phone: normalizedPhone,
+      passwordHash: await hashPassword(password),
+      role: "CUSTOMER",
+    },
   });
 
   const token = await signSession({
     userId: user.id,
     role: user.role as Role,
     name: user.name,
-    email: user.email,
+    email: user.email ?? "",
     shopIds: [],
   });
 

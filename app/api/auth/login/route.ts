@@ -15,7 +15,10 @@ export async function POST(req: NextRequest) {
     where: { email: parsed.data.email },
     include: { shopStaff: { select: { shopId: true } } },
   });
-  if (!user || !(await verifyPassword(parsed.data.password, user.passwordHash))) {
+  // An account created by OTP has no password at all — it must fail here rather than
+  // reach bcrypt with a null hash, and the message stays identical to a wrong password so
+  // this doesn't become a way to probe which accounts are OTP-only.
+  if (!user || !user.passwordHash || !(await verifyPassword(parsed.data.password, user.passwordHash))) {
     return NextResponse.json({ error: "Invalid email or password" }, { status: 401 });
   }
 
@@ -23,7 +26,7 @@ export async function POST(req: NextRequest) {
     userId: user.id,
     role: user.role as Role,
     name: user.name,
-    email: user.email,
+    email: user.email ?? "",
     shopIds: user.shopStaff.map((s) => s.shopId),
   });
 
