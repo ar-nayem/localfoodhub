@@ -88,6 +88,12 @@ export default function ProfilePage() {
           <span className="font-medium">Log out</span>
         </button>
       </div>
+
+      <nav className="mt-8 flex flex-wrap gap-x-5 gap-y-2 text-sm text-muted-foreground">
+        <Link href="/privacy" className="hover:text-foreground">Privacy Policy</Link>
+        <Link href="/terms" className="hover:text-foreground">Terms of Service</Link>
+        <Link href="/delete-account" className="hover:text-error">Delete account</Link>
+      </nav>
     </main>
   );
 }

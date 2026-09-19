@@ -9,7 +9,12 @@ const nextConfig = {
   // still take that fast path unaffected — this rewrite only fires on a miss, sending it
   // to app/api/uploads/[...path]/route.ts, which reads straight from disk instead.
   async rewrites() {
-    return [{ source: "/uploads/:path*", destination: "/api/uploads/:path*" }];
+    return [
+      { source: "/uploads/:path*", destination: "/api/uploads/:path*" },
+      // Android verifies app ownership by fetching exactly this path. Routed to a handler
+      // so the package name and signing fingerprints can come from env — see the route.
+      { source: "/.well-known/assetlinks.json", destination: "/api/well-known/assetlinks" },
+    ];
   },
 };
 

@@ -21,6 +21,15 @@ export const brand = {
   primaryColorDarkHex: "#14472A",
   /** Domain shown on printed cards so a scanner knows where the code leads. */
   domain: "localfoodhub.app",
+  /** Home-screen label under the installed app icon. Launchers truncate past ~12
+   * characters, so this is deliberately shorter than `name`. */
+  appShortName: "Food Hub",
+  /** Splash-screen ground while the installed app boots — matches --background. */
+  backgroundHex: "#FAF8F4",
+  /** The privacy contact printed on /privacy, /terms and /delete-account. App stores
+   * require a working address here — this one is public, so swap it for a dedicated
+   * support inbox once one exists. */
+  supportEmail: "nayem3622@gmail.com",
 };
 
 export const MAIN_PLATFORM_NAME = brand.name;

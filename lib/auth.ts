@@ -6,6 +6,7 @@
 import { SignJWT, jwtVerify } from "jose";
 import { cookies } from "next/headers";
 import bcrypt from "bcryptjs";
+import { prisma } from "./prisma";
 import type { Role } from "./constants";
 
 const SESSION_COOKIE = "lfh_session";
@@ -47,11 +48,20 @@ export async function verifySessionToken(token: string): Promise<SessionPayload 
 
 export const SESSION_COOKIE_NAME = SESSION_COOKIE;
 
-/** Server Components / Route Handlers: read + verify the session cookie. */
+/** Server Components / Route Handlers: read + verify the session cookie.
+ *
+ * A valid signature isn't enough on its own: tokens last 30 days and live on every device
+ * someone signed in from, so a deleted account would otherwise keep a working session
+ * everywhere except the phone it was deleted from. One primary-key lookup closes that.
+ * (middleware.ts verifies tokens separately with jose and never imports this file, which
+ * is what keeps Prisma out of the Edge bundle.) */
 export async function getSession(): Promise<SessionPayload | null> {
   const token = cookies().get(SESSION_COOKIE)?.value;
   if (!token) return null;
-  return verifySessionToken(token);
+  const session = await verifySessionToken(token);
+  if (!session) return null;
+  const exists = await prisma.user.findUnique({ where: { id: session.userId }, select: { id: true } });
+  return exists ? session : null;
 }
 
 export function sessionCookieOptions(maxAgeSeconds = 60 * 60 * 24 * 30) {

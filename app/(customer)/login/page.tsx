@@ -252,6 +252,11 @@ function LoginForm() {
             Join the marketplace
           </Link>
         </p>
+        <p className="mt-5 text-center text-xs text-muted-foreground">
+          By continuing you agree to our{" "}
+          <Link href="/terms" className="underline">Terms of Service</Link> and{" "}
+          <Link href="/privacy" className="underline">Privacy Policy</Link>.
+        </p>
       </div>
     </main>
   );
