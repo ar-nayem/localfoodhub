@@ -1,6 +1,7 @@
-"""Generates every app icon from the placeholder "H" monogram in components/brand/Logo.tsx.
+"""Generates every app icon from the placeholder "F" monogram in components/brand/Logo.tsx.
 
-Run from the project root:  python3 scripts/generate-icons.py
+Run from the project root:  /usr/bin/python3 scripts/generate-icons.py
+(macOS system python3 ships Pillow; a pyenv/homebrew python3 on PATH may not.)
 
 The letter is drawn as three rectangles rather than typeset, so the output is identical on
 any machine regardless of installed fonts. Everything is drawn at 4x and downsampled —
@@ -22,18 +23,20 @@ ICONS = ROOT / "public" / "icons"
 
 
 def draw_mark(draw: ImageDraw.ImageDraw, size: int, glyph_height_ratio: float) -> None:
-    """The H: two stems and a crossbar, centred."""
+    """The F: one stem, a full top arm and a shorter middle arm."""
     h = size * glyph_height_ratio
-    w = h * 0.78
+    w = h * 0.70
     stem = h * 0.21
-    bar = stem * 0.9
-    left = (size - w) / 2
+    bar = stem * 0.92
+    # Optically centred: an F carries all its weight on the left, so centring its bounding
+    # box would make it look pushed right inside the tile.
+    left = (size - w) / 2 + w * 0.06
     top = (size - h) / 2
     r = stem * 0.18
     draw.rounded_rectangle([left, top, left + stem, top + h], radius=r, fill=WHITE)
-    draw.rounded_rectangle([left + w - stem, top, left + w, top + h], radius=r, fill=WHITE)
-    mid = top + h / 2
-    draw.rectangle([left + stem * 0.5, mid - bar / 2, left + w - stem * 0.5, mid + bar / 2], fill=WHITE)
+    draw.rounded_rectangle([left, top, left + w, top + bar], radius=r, fill=WHITE)
+    mid = top + h * 0.46
+    draw.rounded_rectangle([left, mid, left + w * 0.76, mid + bar], radius=r, fill=WHITE)
 
 
 def render(size: int, *, rounded: bool, glyph: float) -> Image.Image:

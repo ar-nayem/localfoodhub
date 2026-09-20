@@ -15,7 +15,8 @@ export async function middleware(req: NextRequest) {
   const isAdmin = pathname.startsWith("/admin");
   if (!isVendor && !isAdmin) return NextResponse.next();
 
-  const token = req.cookies.get("lfh_session")?.value;
+  // Both names, for the same reason as lib/auth.ts: the rename must not sign anyone out.
+  const token = req.cookies.get("foodivo_session")?.value ?? req.cookies.get("lfh_session")?.value;
   let role: string | null = null;
   if (token) {
     try {

@@ -9,7 +9,7 @@ export interface Coords {
 
 type Status = "idle" | "locating" | "granted" | "denied" | "unavailable";
 
-const CACHE_KEY = "lfh_geo_coords";
+const CACHE_KEY = "foodivo_geo_coords";
 const CACHE_MAX_AGE_MS = 15 * 60 * 1000; // 15 min — real enough for "nearby shops", no reason to re-poll GPS every render
 
 /**

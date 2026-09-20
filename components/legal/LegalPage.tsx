@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { brand } from "@/lib/brand";
 
 /** Shared shell for /privacy, /terms and /delete-account — one readable measure and type
  * scale, since these are the pages people (and app-store reviewers) actually read line by
@@ -18,7 +19,7 @@ export function LegalPage({
     // pb-40: the last controls — including the delete button — must always scroll clear
     // of the floating cart bar and bottom nav on mobile.
     <main className="mx-auto max-w-2xl px-5 pb-40 pt-8 sm:pb-16">
-      <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-primary">Local Food Hub</p>
+      <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-primary">{brand.name}</p>
       <h1 className="text-2xl font-bold tracking-tight">{title}</h1>
       <p className="mt-1 text-sm text-muted-foreground">Last updated {updated}</p>
       {intro && <div className="mt-5 text-[15px] leading-relaxed text-muted-foreground">{intro}</div>}

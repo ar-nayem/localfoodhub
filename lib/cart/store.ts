@@ -57,6 +57,8 @@ interface CartState {
   }) => void;
 }
 
+export const CART_STORAGE_KEY = "foodivo-cart";
+
 export const useCartStore = create<CartState>()(
   persist(
     (set, get) => ({
@@ -150,9 +152,13 @@ export const useCartStore = create<CartState>()(
     // hydration-mismatch error on every page, not just one banner. Deferring rehydration
     // to a post-mount effect keeps first paint identical everywhere, then the real cart
     // populates a moment later.
-    { name: "lfh-cart", skipHydration: true }
+    { name: CART_STORAGE_KEY, skipHydration: true }
   )
 );
+
+/** Pre-rename key, migrated in CartHydrator — a cart has no expiry, so renaming without
+ * moving it would quietly empty every basket saved before the rename. */
+export const LEGACY_CART_STORAGE_KEY = "lfh-cart";
 
 export function cartLineKey(
   productId: string,

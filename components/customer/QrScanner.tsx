@@ -6,6 +6,7 @@ import jsQR from "jsqr";
 import { Camera, KeyRound } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
+import { brand } from "@/lib/brand";
 
 /** In-app camera QR scanner (spec Section 17). Pure client-side decode via jsQR — no
  * external scanning service. Any of our own QR codes just encode `/q/<token>`, so once
@@ -79,7 +80,7 @@ export function QrScanner({
       router.push(`/q/${match[1]}`);
       return;
     }
-    setError("This doesn't look like a Local Food Hub QR code.");
+    setError(`This doesn't look like a ${brand.name} QR code.`);
   }
 
   function submitManual(e: React.FormEvent) {

@@ -87,7 +87,7 @@ export async function GET(req: NextRequest) {
     return new NextResponse([header.join(","), ...rows].join("\n"), {
       headers: {
         "Content-Type": "text/csv; charset=utf-8",
-        "Content-Disposition": `attachment; filename="localfoodhub-customers-${new Date()
+        "Content-Disposition": `attachment; filename="foodivo-customers-${new Date()
           .toISOString()
           .slice(0, 10)}.csv"`,
       },

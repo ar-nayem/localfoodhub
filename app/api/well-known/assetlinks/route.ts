@@ -12,7 +12,7 @@ import { NextResponse } from "next/server";
 // with a *second* key whose fingerprint must be listed too. Adding one is an .env edit
 // plus a restart, not a code change.
 //
-//   ANDROID_PACKAGE_NAME=top.arnayem.localfoodhub
+//   ANDROID_PACKAGE_NAME=top.arnayem.foodivo
 //   ANDROID_SHA256_CERT_FINGERPRINTS=AB:CD:...,12:34:...
 
 export const dynamic = "force-dynamic";

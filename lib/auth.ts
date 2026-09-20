@@ -9,7 +9,12 @@ import bcrypt from "bcryptjs";
 import { prisma } from "./prisma";
 import type { Role } from "./constants";
 
-const SESSION_COOKIE = "lfh_session";
+const SESSION_COOKIE = "foodivo_session";
+/** Pre-rename cookie. Sessions last 30 days, so dropping this outright would have signed
+ * out every customer, vendor and admin the moment the rename deployed. Reading it as a
+ * fallback lets existing sessions run out naturally; new sign-ins always get the name
+ * above. Safe to delete once 30 days have passed since the rename (2026-10-20). */
+const LEGACY_SESSION_COOKIE = "lfh_session";
 const secret = new TextEncoder().encode(process.env.JWT_SECRET || "dev-only-insecure-secret");
 
 export interface SessionPayload {
@@ -47,6 +52,7 @@ export async function verifySessionToken(token: string): Promise<SessionPayload 
 }
 
 export const SESSION_COOKIE_NAME = SESSION_COOKIE;
+export const LEGACY_SESSION_COOKIE_NAME = LEGACY_SESSION_COOKIE;
 
 /** Server Components / Route Handlers: read + verify the session cookie.
  *
@@ -56,7 +62,8 @@ export const SESSION_COOKIE_NAME = SESSION_COOKIE;
  * (middleware.ts verifies tokens separately with jose and never imports this file, which
  * is what keeps Prisma out of the Edge bundle.) */
 export async function getSession(): Promise<SessionPayload | null> {
-  const token = cookies().get(SESSION_COOKIE)?.value;
+  const jar = cookies();
+  const token = jar.get(SESSION_COOKIE)?.value ?? jar.get(LEGACY_SESSION_COOKIE)?.value;
   if (!token) return null;
   const session = await verifySessionToken(token);
   if (!session) return null;

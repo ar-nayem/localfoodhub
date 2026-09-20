@@ -9,7 +9,10 @@
 // showing stale order status, or one account's page after a sign-out. Network-first with
 // no page cache means the app is exactly as fresh as it was before this file existed.
 
-const CACHE = "lfh-offline-v1";
+// Renamed at the Foodivo rebrand. The version suffix matters: changing this file is what
+// makes the browser install the new worker, and the new name means the activate handler
+// drops the old cache holding the pre-rebrand offline page.
+const CACHE = "foodivo-offline-v1";
 const OFFLINE_URL = "/offline.html";
 
 self.addEventListener("install", (event) => {
