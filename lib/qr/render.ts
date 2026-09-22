@@ -231,7 +231,7 @@ async function renderQrSlot(slot: Extract<TemplateSlot, { kind: "qr" }>, ctx: Sl
       qrCentreLogo({
         qrSize: slot.size,
         maxLogoSize: qr.maxLogoSize,
-        label: brand.shortName.slice(0, 1).toUpperCase(),
+        label: brand.shortName.slice(0, 1), // Bengali has no case; .toUpperCase() would be a no-op/confusing here
         color: brand.primaryColorHex,
       })
     );

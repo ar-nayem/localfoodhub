@@ -2,7 +2,7 @@ import path from "path";
 import { unlink } from "fs/promises";
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { getSession, SESSION_COOKIE_NAME, LEGACY_SESSION_COOKIE_NAME } from "@/lib/auth";
+import { getSession, SESSION_COOKIE_NAME, LEGACY_SESSION_COOKIE_NAMES } from "@/lib/auth";
 
 // Account deletion — required by the Play Store for any app that lets people sign up.
 //
@@ -146,6 +146,8 @@ export async function DELETE(req: NextRequest) {
 
   const response = NextResponse.json({ ok: true });
   response.cookies.set(SESSION_COOKIE_NAME, "", { path: "/", maxAge: 0 });
-  response.cookies.set(LEGACY_SESSION_COOKIE_NAME, "", { path: "/", maxAge: 0 });
+  for (const legacyName of LEGACY_SESSION_COOKIE_NAMES) {
+    response.cookies.set(legacyName, "", { path: "/", maxAge: 0 });
+  }
   return response;
 }

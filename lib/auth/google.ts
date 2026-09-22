@@ -6,8 +6,8 @@ const GOOGLE_USERINFO_URL = "https://openidconnect.googleapis.com/v1/userinfo";
 
 // These live for 10 minutes, so unlike the session cookie they need no migration: at
 // worst a sign-in already in flight when the rename deploys fails once and is retried.
-export const GOOGLE_STATE_COOKIE = "foodivo_oauth_state";
-export const GOOGLE_RETURN_COOKIE = "foodivo_oauth_next";
+export const GOOGLE_STATE_COOKIE = "shokherkhabar_oauth_state";
+export const GOOGLE_RETURN_COOKIE = "shokherkhabar_oauth_next";
 
 export function isGoogleAuthConfigured(): boolean {
   return !!(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET);

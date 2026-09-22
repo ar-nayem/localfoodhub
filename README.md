@@ -1,4 +1,4 @@
-# Foodivo
+# শখের খাবার (shokherkhabar)
 
 A QR-first, multi-vendor local food marketplace: customers discover nearby shops and
 order for delivery, pickup, or dine-in (via table QR); shop owners run their menu,
@@ -25,11 +25,11 @@ Runs on **http://localhost:4410** (pinned port — see `package.json`).
 
 | Role | Email | Password |
 |---|---|---|
-| Admin | `admin@foodivo.demo` | `admin123` |
-| Vendor (Anwar's Kitchen) | `owner-anwars-kitchen@foodivo.demo` | `vendor123` |
-| Vendor (Golden Wok Stall) | `owner-golden-wok-stall@foodivo.demo` | `vendor123` |
-| Vendor (Riverside Café) | `owner-riverside-cafe@foodivo.demo` | `vendor123` |
-| Vendor (Fresh Press Juice Bar — starts **PENDING**, for the admin approval demo) | `owner-fresh-press@foodivo.demo` | `vendor123` |
+| Admin | `admin@shokherkhabar.demo` | `admin123` |
+| Vendor (Anwar's Kitchen) | `owner-anwars-kitchen@shokherkhabar.demo` | `vendor123` |
+| Vendor (Golden Wok Stall) | `owner-golden-wok-stall@shokherkhabar.demo` | `vendor123` |
+| Vendor (Riverside Café) | `owner-riverside-cafe@shokherkhabar.demo` | `vendor123` |
+| Vendor (Fresh Press Juice Bar — starts **PENDING**, for the admin approval demo) | `owner-fresh-press@shokherkhabar.demo` | `vendor123` |
 
 Customers don't need an account — guest checkout works for all three order modes.
 
@@ -77,7 +77,7 @@ Customers don't need an account — guest checkout works for all three order mod
 
 ## Walking the Shop Builder ("Customize My Shop")
 
-1. Sign in as any `owner-*@foodivo.demo` (owner role only — staff can't reach this
+1. Sign in as any `owner-*@shokherkhabar.demo` (owner role only — staff can't reach this
    page) → `/vendor/storefront`.
 2. Upload a logo/banner, pick a theme preset (or a custom accent color — colors too pale
    for readable button text are rejected on save), toggle which optional sections show

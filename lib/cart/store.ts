@@ -57,7 +57,7 @@ interface CartState {
   }) => void;
 }
 
-export const CART_STORAGE_KEY = "foodivo-cart";
+export const CART_STORAGE_KEY = "shokherkhabar-cart";
 
 export const useCartStore = create<CartState>()(
   persist(
@@ -156,9 +156,10 @@ export const useCartStore = create<CartState>()(
   )
 );
 
-/** Pre-rename key, migrated in CartHydrator — a cart has no expiry, so renaming without
- * moving it would quietly empty every basket saved before the rename. */
-export const LEGACY_CART_STORAGE_KEY = "lfh-cart";
+/** Every prior cart key, most recent first — migrated in CartHydrator. A cart has no
+ * expiry, so renaming without moving it would quietly empty every basket saved before
+ * that rename, however long ago it was. */
+export const LEGACY_CART_STORAGE_KEYS = ["foodivo-cart", "lfh-cart"];
 
 export function cartLineKey(
   productId: string,

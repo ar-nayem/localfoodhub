@@ -15,8 +15,13 @@ export async function middleware(req: NextRequest) {
   const isAdmin = pathname.startsWith("/admin");
   if (!isVendor && !isAdmin) return NextResponse.next();
 
-  // Both names, for the same reason as lib/auth.ts: the rename must not sign anyone out.
-  const token = req.cookies.get("foodivo_session")?.value ?? req.cookies.get("lfh_session")?.value;
+  // Every prior cookie name, for the same reason as lib/auth.ts: a rename must not sign
+  // anyone out. Keep this list in sync with LEGACY_SESSION_COOKIES there by hand — this
+  // file can't import it (Edge runtime, no Prisma-importing module in its graph).
+  const token =
+    req.cookies.get("shokherkhabar_session")?.value ??
+    req.cookies.get("foodivo_session")?.value ??
+    req.cookies.get("lfh_session")?.value;
   let role: string | null = null;
   if (token) {
     try {

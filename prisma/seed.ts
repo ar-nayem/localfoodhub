@@ -16,14 +16,14 @@ async function hash(pw: string) {
 }
 
 async function main() {
-  console.log("Seeding Foodivo demo data...");
+  console.log("Seeding শখের খাবার demo data...");
 
   const adminPassword = "admin123";
   const admin = await prisma.user.upsert({
-    where: { email: "admin@foodivo.demo" },
+    where: { email: "admin@shokherkhabar.demo" },
     update: {},
     create: {
-      email: "admin@foodivo.demo",
+      email: "admin@shokherkhabar.demo",
       name: "Platform Admin",
       passwordHash: await hash(adminPassword),
       role: "SUPER_ADMIN",
@@ -154,7 +154,7 @@ async function main() {
   ];
 
   for (const def of shopDefs) {
-    const ownerEmail = `owner-${def.slug}@foodivo.demo`;
+    const ownerEmail = `owner-${def.slug}@shokherkhabar.demo`;
     const owner = await prisma.user.upsert({
       where: { email: ownerEmail },
       update: {},
@@ -252,10 +252,10 @@ async function main() {
 
   // One shop left PENDING so the admin approval queue has something to demo.
   const pendingOwner = await prisma.user.upsert({
-    where: { email: "owner-fresh-press@foodivo.demo" },
+    where: { email: "owner-fresh-press@shokherkhabar.demo" },
     update: {},
     create: {
-      email: "owner-fresh-press@foodivo.demo",
+      email: "owner-fresh-press@shokherkhabar.demo",
       name: "Fresh Press Juice Bar Owner",
       passwordHash: await hash("vendor123"),
       role: "SHOP_OWNER",
@@ -273,7 +273,7 @@ async function main() {
       latitude: 23.7340,
       longitude: 90.4060,
       phone: "+880-1711-000004",
-      email: "owner-fresh-press@foodivo.demo",
+      email: "owner-fresh-press@shokherkhabar.demo",
       status: "PENDING",
       locationId: location.id,
       staff: { create: { userId: pendingOwner.id, role: "SHOP_OWNER" } },
@@ -281,9 +281,9 @@ async function main() {
   });
 
   console.log("\nDone. Sign-ins:");
-  console.log(`  Admin:  admin@foodivo.demo / ${adminPassword}`);
-  console.log(`  Vendor: owner-anwars-kitchen@foodivo.demo / vendor123 (and other shops, same pattern)`);
-  console.log(`  Pending shop (for approval demo): owner-fresh-press@foodivo.demo / vendor123`);
+  console.log(`  Admin:  admin@shokherkhabar.demo / ${adminPassword}`);
+  console.log(`  Vendor: owner-anwars-kitchen@shokherkhabar.demo / vendor123 (and other shops, same pattern)`);
+  console.log(`  Pending shop (for approval demo): owner-fresh-press@shokherkhabar.demo / vendor123`);
 }
 
 main()
