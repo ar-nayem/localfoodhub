@@ -49,6 +49,21 @@ export const brand = {
   supportEmail: "nayem3622@gmail.com",
 };
 
+/** The second Android app — for shop owners and their staff. Same platform, same backend,
+ * its own listing: a different name and icon so the two apps can't be mistaken for each
+ * other on a home screen, in Play search, or in the recents list. Colours stay the
+ * platform's own; only the icon artwork is distinct (scripts/generate-icons.py). */
+export const businessBrand = {
+  name: `${brand.name} Business`,
+  /** Home-screen label. Launchers cut off past ~12 characters, so this drops "খাবার". */
+  appShortName: "শখের Business",
+  description: "Run your shop on শখের খাবার — live orders, menu, kitchen display, QR codes and reviews.",
+  /** Where the installed app opens. */
+  startUrl: "/vendor",
+  /** Dark ground behind the icon glyph — see the icon script. */
+  iconBackgroundHex: "#17261E",
+};
+
 export const MAIN_PLATFORM_NAME = brand.name;
 export const MAIN_PLATFORM_LOGO = "/logo.svg"; // placeholder path — see components/brand/Logo.tsx
 export const MAIN_PLATFORM_PRIMARY_COLOR = brand.primaryColorHsl;

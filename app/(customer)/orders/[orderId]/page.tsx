@@ -1,8 +1,6 @@
 import { notFound } from "next/navigation";
-import QRCodeLib from "qrcode";
-import { prisma } from "@/lib/prisma";
 import { getSession, isStaffRole } from "@/lib/auth";
-import { qrPublicUrl } from "@/lib/qr/token";
+import { loadOrderView } from "@/lib/orders/view";
 import { OrderView } from "@/components/customer/OrderView";
 
 export const dynamic = "force-dynamic";
@@ -14,19 +12,9 @@ export default async function OrderPage({
   params: { orderId: string };
   searchParams: { justPaid?: string; verify?: string };
 }) {
-  const order = await prisma.order.findUnique({
-    where: { id: params.orderId },
-    include: {
-      items: true,
-      shop: true,
-      table: true,
-      deliveryAddress: true,
-      payment: true,
-      qrCode: true,
-      statusEvents: { orderBy: { createdAt: "asc" } },
-    },
-  });
-  if (!order) notFound();
+  const loaded = await loadOrderView(params.orderId);
+  if (!loaded) notFound();
+  const { raw: order, view, qrImage } = loaded;
 
   const session = await getSession();
   const isOwner = !!session && session.userId === order.customerId;
@@ -39,23 +27,10 @@ export default async function OrderPage({
 
   const isVerifyingStaff = !!searchParams.verify && isStaffOfShop;
 
-  const qrImage = order.qrCode
-    ? await QRCodeLib.toDataURL(qrPublicUrl(order.qrCode.token), { width: 320, margin: 2 })
-    : null;
-
   return (
     <main className="mx-auto max-w-lg px-4 pb-10 pt-6">
       <OrderView
-        order={{
-          ...order,
-          createdAt: order.createdAt.toISOString(),
-          pickupTime: order.pickupTime?.toISOString() ?? null,
-          cancelledAt: order.cancelledAt?.toISOString() ?? null,
-          statusEvents: order.statusEvents.map((e) => ({
-            status: e.status,
-            createdAt: e.createdAt.toISOString(),
-          })),
-        }}
+        order={view}
         qrImage={qrImage}
         justPaid={searchParams.justPaid === "1"}
         isVerifyingStaff={isVerifyingStaff}

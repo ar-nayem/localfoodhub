@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { verifyPassword, signSession, sessionCookieOptions, SESSION_COOKIE_NAME } from "@/lib/auth";
+import { verifyPassword, signSession, sessionCookieOptions, isStaffRole, SESSION_COOKIE_NAME } from "@/lib/auth";
 import { loginSchema } from "@/lib/validation/schemas";
 import type { Role } from "@/lib/constants";
 
@@ -20,6 +20,18 @@ export async function POST(req: NextRequest) {
   // this doesn't become a way to probe which accounts are OTP-only.
   if (!user || !user.passwordHash || !(await verifyPassword(parsed.data.password, user.passwordHash))) {
     return NextResponse.json({ error: "Invalid email or password" }, { status: 401 });
+  }
+
+  // The Business app sends `app: "business"`. It is for shop accounts only, so a customer
+  // account is turned away here rather than signed in to a app it can't use — which would
+  // leave it holding a session that the vendor pages immediately bounce back to sign-in.
+  // The flag can only make sign-in stricter, never grant anything, so trusting the client
+  // to send it is safe.
+  if (body?.app === "business" && !isStaffRole(user.role as Role)) {
+    return NextResponse.json(
+      { error: "This is a customer account. Use the শখের খাবার app to order, or apply to join with your shop." },
+      { status: 403 }
+    );
   }
 
   const token = await signSession({

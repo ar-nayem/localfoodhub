@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getSession } from "@/lib/auth";
 import { resolveQrToken } from "@/lib/qr/resolve";
 import { appBaseUrl } from "@/lib/qr/token";
+import { BUSINESS_ORIGIN, isBusinessHost } from "@/lib/hosts";
 
 // The load-bearing route: every physical/printed QR in the platform encodes
 // `${BASE_URL}/q/<token>` and nothing else (spec Section 36). This resolves it
@@ -21,6 +22,12 @@ export async function GET(req: NextRequest, { params }: { params: { token: strin
     return NextResponse.redirect(new URL(`/qr-error?reason=${result.reason}`, base));
   }
   if (result.kind === "staff_verify") {
+    // Scanned inside the Business app: verify on the Business host, where this staff
+    // member's session actually lives. Scanned anywhere else (a phone camera opening the
+    // printed customer link) it stays on the customer site, as before.
+    if (BUSINESS_ORIGIN && isBusinessHost(req.headers.get("host"))) {
+      return NextResponse.redirect(new URL(`/vendor/verify/${result.orderId}`, BUSINESS_ORIGIN));
+    }
     return NextResponse.redirect(new URL(`/orders/${result.orderId}?verify=1`, base));
   }
   return NextResponse.redirect(new URL(result.to, base));

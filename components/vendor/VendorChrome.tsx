@@ -47,7 +47,7 @@ export function VendorChrome({ children, role }: { children: React.ReactNode; ro
 
   async function logout() {
     await fetch("/api/auth/logout", { method: "POST" });
-    router.push("/login");
+    router.push("/vendor/login");
     router.refresh();
   }
 
@@ -56,7 +56,7 @@ export function VendorChrome({ children, role }: { children: React.ReactNode; ro
       <aside className="hidden w-60 shrink-0 flex-col border-r border-border bg-surface sm:flex">
         <div className="border-b border-border p-4">
           <Logo />
-          <span className="mt-1 block text-xs text-muted-foreground">Vendor dashboard</span>
+          <span className="mt-1 block text-xs text-muted-foreground">Business dashboard</span>
         </div>
         <nav className="flex-1 space-y-1 p-3">
           {nav.map(({ href, label, icon: Icon }) => {

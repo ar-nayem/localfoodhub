@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { signSession, sessionCookieOptions, SESSION_COOKIE_NAME } from "@/lib/auth";
+import { signSession, sessionCookieOptions, isStaffRole, SESSION_COOKIE_NAME } from "@/lib/auth";
 import { resolveIdentifier, verifyOtp } from "@/lib/otp/service";
 import type { Role } from "@/lib/constants";
 
@@ -39,6 +39,17 @@ export async function POST(req: NextRequest) {
     where,
     include: { shopStaff: { select: { shopId: true } } },
   });
+
+  // The Business app (`app: "business"`) is sign-in only: a code must never mint a new
+  // account there, and only shop accounts may use it. Like the password route, the flag can
+  // only tighten the rules. Reaching this point means the caller proved control of the
+  // contact, so saying "no shop account" reveals nothing about anyone else's.
+  if (body?.app === "business" && (!user || !isStaffRole(user.role as Role))) {
+    return NextResponse.json(
+      { error: "No shop account uses that email or phone number. Apply to join first, then sign in." },
+      { status: 403 }
+    );
+  }
 
   if (!user) {
     // First sign-in with this contact creates the account. Role is hardcoded, never taken
