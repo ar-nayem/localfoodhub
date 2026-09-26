@@ -1,6 +1,6 @@
 import Link from "next/link";
 import Image from "next/image";
-import { Truck, ShoppingBag, UtensilsCrossed, QrCode, Star, Tag, Utensils } from "lucide-react";
+import { Truck, ShoppingBag, ConciergeBell, QrCode, Star, BadgePercent, Utensils } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { brand } from "@/lib/brand";
 import { SearchBar } from "@/components/customer/SearchBar";
@@ -17,10 +17,22 @@ const QUICK_TILES = [
   { href: "/explore", label: "Food", icon: Utensils, tint: "bg-[#FDF1DF] text-[#C9772A]" },
   // Delivery tile is gated on FEATURES.delivery — hidden for this launch.
   { href: "/explore?mode=delivery", label: "Delivery", icon: Truck, tint: "bg-[#E4F1E6] text-primary", mode: "DELIVERY" },
-  { href: "/explore?mode=dine-in", label: "Dine-in", icon: UtensilsCrossed, tint: "bg-[#FCE9E4] text-[#C0562F]" },
+  { href: "/explore?mode=dine-in", label: "Dine-in", icon: ConciergeBell, tint: "bg-[#FCE9E4] text-[#C0562F]" },
   { href: "/explore?mode=pickup", label: "Takeaway", icon: ShoppingBag, tint: "bg-[#E7EEF9] text-[#3A6EA5]" },
-  { href: "/explore?deals=1", label: "Offers", icon: Tag, tint: "bg-[#FBE4E8] text-[#C2415C]" },
+  { href: "/explore?deals=1", label: "Offers", icon: BadgePercent, tint: "bg-[#FBE4E8] text-[#C2415C]" },
 ].filter((t) => isOrderTypeActive(t.mode ?? ""));
+
+// The column count follows however many tiles are actually shown. It used to be a fixed
+// five, so with Delivery hidden the four visible tiles sat in the left four fifths of the
+// row and the whole strip looked pushed to the left. Full class names, not template
+// strings — Tailwind only generates classes it can see written out.
+const TILE_COLUMNS: Record<number, string> = {
+  1: "grid-cols-1",
+  2: "grid-cols-2",
+  3: "grid-cols-3",
+  4: "grid-cols-4",
+  5: "grid-cols-5",
+};
 
 export default async function HomePage() {
   const [shops, categories, picks] = await Promise.all([
@@ -75,15 +87,22 @@ export default async function HomePage() {
         </Link>
       </section>
 
-      {/* Quick access */}
+      {/* Quick access. Equal-width cards that always fill the row edge to edge; each card
+          centres its icon and label on the same axis, so nothing drifts to one side. */}
       <section className="mb-6">
-        <div className="grid grid-cols-5 gap-2 sm:gap-4">
+        <div className={`grid gap-2.5 sm:gap-4 ${TILE_COLUMNS[QUICK_TILES.length] ?? "grid-cols-4"}`}>
           {QUICK_TILES.map(({ href, label, icon: Icon, tint }) => (
-            <Link key={label} href={href} className="flex flex-col items-center gap-1.5 text-center">
-              <span className={`flex h-14 w-full max-w-[3.75rem] items-center justify-center rounded-2xl ${tint}`}>
-                <Icon size={22} />
+            <Link
+              key={label}
+              href={href}
+              className="group flex min-w-0 flex-col items-center justify-center gap-2 rounded-2xl border border-border bg-surface px-1 py-3.5 text-center shadow-sm transition duration-150 hover:-translate-y-0.5 hover:shadow-md active:scale-[0.97] sm:flex-row sm:gap-3 sm:px-4 sm:py-4"
+            >
+              <span
+                className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl ring-1 ring-inset ring-black/[0.04] transition-transform duration-150 group-hover:scale-105 ${tint}`}
+              >
+                <Icon size={22} strokeWidth={1.9} />
               </span>
-              <span className="text-[11px] font-medium leading-tight sm:text-xs">{label}</span>
+              <span className="truncate text-xs font-semibold leading-tight text-foreground sm:text-sm">{label}</span>
             </Link>
           ))}
         </div>
