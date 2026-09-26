@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { resolveIdentifier, requestOtp } from "@/lib/otp/service";
+import { otpProvider } from "@/lib/otp/provider";
 
 export async function POST(req: NextRequest) {
   const body = await req.json().catch(() => null);
@@ -8,6 +9,18 @@ export async function POST(req: NextRequest) {
   const id = resolveIdentifier(raw);
   if (!id) {
     return NextResponse.json({ error: "Enter a valid email address or phone number" }, { status: 400 });
+  }
+
+  if (!otpProvider.canDeliver(id.channel)) {
+    return NextResponse.json(
+      {
+        error:
+          id.channel === "PHONE"
+            ? "Codes by text message aren't available yet. Enter your email address instead."
+            : "Sign-in codes can't be sent right now. Use your password instead.",
+      },
+      { status: 400 }
+    );
   }
 
   const result = await requestOtp(id);

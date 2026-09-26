@@ -21,7 +21,24 @@ npm run dev
 
 Runs on **http://localhost:4410** (pinned port — see `package.json`).
 
+### Two apps, one server
+
+The same Next.js process serves two hostnames, and each is its own Play Store app:
+
+| App | Local | Production |
+|---|---|---|
+| শখের খাবার (customers) | http://localhost:4410 | https://shokherkhabar.arnayem.top |
+| শখের খাবার Business (shop owners/staff) | http://business.localhost:4410 | https://business-shokherkhabar.arnayem.top |
+
+`NEXT_PUBLIC_BUSINESS_URL` switches the split on (see `lib/hosts.ts` and `middleware.ts`);
+leave it empty and everything is served from one host. Shop owners sign in at
+`/vendor/login` on the Business host. The Android projects that wrap each site are built
+outside this repo with Bubblewrap (Trusted Web Activity).
+
 ### Seeded accounts
+
+These are the **local seed** passwords only. Production passwords were rotated and are not
+in this repository.
 
 | Role | Email | Password |
 |---|---|---|

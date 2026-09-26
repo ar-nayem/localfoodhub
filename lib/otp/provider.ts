@@ -36,6 +36,15 @@ class ChannelRoutingProvider implements OtpDeliveryProvider {
     this.name = this.smtp ? "smtp+console" : "console";
   }
 
+  /** Whether a code on this channel would actually reach the person. In production the
+   * console fallback reaches no one, so a channel without a real transport must be refused
+   * up front — telling someone "we sent you a code" that never arrives is a dead end. In
+   * development the console IS the delivery, so every channel counts. */
+  canDeliver(channel: OtpDelivery["channel"]): boolean {
+    if (process.env.NODE_ENV !== "production") return true;
+    return channel === "EMAIL" && !!this.smtp;
+  }
+
   async send(delivery: OtpDelivery): Promise<void> {
     if (delivery.channel === "EMAIL" && this.smtp) {
       await this.smtp.send(delivery);
@@ -46,6 +55,6 @@ class ChannelRoutingProvider implements OtpDeliveryProvider {
 }
 
 /** Add an SMS implementation to ChannelRoutingProvider to turn phone codes on. */
-export const otpProvider: OtpDeliveryProvider = new ChannelRoutingProvider();
+export const otpProvider = new ChannelRoutingProvider();
 
 export type { OtpDelivery, OtpDeliveryProvider };
