@@ -37,7 +37,7 @@ export const brand = {
   /** Domain shown on printed cards so a scanner knows where the code leads — the host the
    * codes actually resolve to, never a placeholder: printing a domain the platform doesn't
    * own would send anyone who types it somewhere else entirely. */
-  domain: hostOf(process.env.NEXT_PUBLIC_BASE_URL) ?? "menu.arnayem.top",
+  domain: hostOf(process.env.NEXT_PUBLIC_BASE_URL) ?? "shokherkhabar.arnayem.top",
   /** Home-screen label under the installed app icon. Launchers truncate past ~12
    * (Latin-equivalent) characters; "শখের খাবার" is two short words, so it matches `name`. */
   appShortName: "শখের খাবার",
