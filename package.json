@@ -10,6 +10,7 @@
     "build": "NODE_OPTIONS=--max-old-space-size=1400 next build",
     "start": "next start -p ${PORT:-4410}",
     "lint": "next lint",
+    "test": "tsx --test tests/**/*.test.ts",
     "db:push": "prisma db push",
     "db:seed": "prisma db seed",
     "db:reset": "prisma db push --force-reset && prisma db seed"
