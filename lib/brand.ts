@@ -64,6 +64,15 @@ export const businessBrand = {
   iconBackgroundHex: "#17261E",
 };
 
+/** The platform-operations app, with its own listing and shield-monogram icon. */
+export const adminBrand = {
+  name: `${brand.name} Admin`,
+  appShortName: "শখের Admin",
+  description: `Manage ${brand.name} shops, locations, customers, finance and platform operations.`,
+  startUrl: "/admin",
+  iconBackgroundHex: "#102A1D",
+};
+
 export const MAIN_PLATFORM_NAME = brand.name;
 export const MAIN_PLATFORM_LOGO = "/logo.svg"; // placeholder path — see components/brand/Logo.tsx
 export const MAIN_PLATFORM_PRIMARY_COLOR = brand.primaryColorHsl;

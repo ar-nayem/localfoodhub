@@ -30,6 +30,11 @@ WHITE = (255, 255, 255, 255)
 INK = (0x17, 0x26, 0x1E, 255)
 GOLD = (0xF2, 0xB8, 0x4B, 255)
 CREAM = (0xFA, 0xF1, 0xDC, 255)
+# Admin uses the same letter inside an original shield outline, in mint on forest green.
+# The shield reads as platform stewardship, distinct from the Business shop awning.
+# ADMIN_INK must match adminBrand.iconBackgroundHex.
+ADMIN_INK = (0x10, 0x2A, 0x1D, 255)
+MINT = (0x9E, 0xE0, 0xB7, 255)
 SUPERSAMPLE = 4
 
 FONT_PATH = "/System/Library/Fonts/KohinoorBangla.ttc"
@@ -41,6 +46,7 @@ GLYPH = MONOGRAM_SOURCE[0]
 ROOT = Path(__file__).resolve().parent.parent
 ICONS = ROOT / "public" / "icons"
 BUSINESS_ICONS = ICONS / "business"
+ADMIN_ICONS = ICONS / "admin"
 
 
 def draw_mark(draw: ImageDraw.ImageDraw, size: int, glyph_height_ratio: float) -> None:
@@ -113,9 +119,50 @@ def render_business(size: int, *, rounded: bool, scale: float) -> Image.Image:
     return img.resize((size, size), Image.LANCZOS)
 
 
+def render_admin(size: int, *, rounded: bool, scale: float) -> Image.Image:
+    """Original shield-and-letter artwork; `scale` sets the shield's width and height.
+    Maskable outputs use a smaller shield so every corner fits the central safe circle."""
+    big = size * SUPERSAMPLE
+    img = Image.new("RGBA", (big, big), (0, 0, 0, 0))
+    draw = ImageDraw.Draw(img)
+    if rounded:
+        draw.rounded_rectangle([0, 0, big - 1, big - 1], radius=big * 0.22, fill=ADMIN_INK)
+    else:
+        draw.rectangle([0, 0, big, big], fill=ADMIN_INK)
+
+    mark_h = big * scale
+    left = top = (big - mark_h) / 2
+    right = left + mark_h
+    points = [
+        (left, top),
+        (right, top),
+        (right, top + mark_h * 0.49),
+        (right - mark_h * 0.12, top + mark_h * 0.73),
+        (big / 2, top + mark_h),
+        (left + mark_h * 0.12, top + mark_h * 0.73),
+        (left, top + mark_h * 0.49),
+        (left, top),
+    ]
+    draw.line(points, fill=MINT, width=int(mark_h * 0.055), joint="curve")
+
+    font = ImageFont.truetype(FONT_PATH, 100, index=FONT_INDEX)
+    l, t, r, b = draw.textbbox((0, 0), GLYPH, font=font, anchor="lt")
+    font = ImageFont.truetype(FONT_PATH, int(100 * mark_h * 0.47 / (b - t)), index=FONT_INDEX)
+    l, t, r, b = draw.textbbox((0, 0), GLYPH, font=font, anchor="lt")
+    draw.text(
+        ((big - (r - l)) / 2 - l, top + mark_h * 0.43 - (b - t) / 2 - t),
+        GLYPH,
+        font=font,
+        fill=CREAM,
+        anchor="lt",
+    )
+    return img.resize((size, size), Image.LANCZOS)
+
+
 def main() -> None:
     ICONS.mkdir(parents=True, exist_ok=True)
     BUSINESS_ICONS.mkdir(parents=True, exist_ok=True)
+    ADMIN_ICONS.mkdir(parents=True, exist_ok=True)
     outputs = {
         # purpose "any": the rounded tile, transparent corners, as it appears in-app.
         ICONS / "icon-192.png": render(192, rounded=True, glyph=0.5),
@@ -136,6 +183,12 @@ def main() -> None:
         BUSINESS_ICONS / "icon-maskable-512.png": render_business(512, rounded=False, scale=0.5),
         BUSINESS_ICONS / "apple-touch-icon.png": render_business(180, rounded=False, scale=0.56),
         BUSINESS_ICONS / "play-store-512.png": render_business(512, rounded=False, scale=0.56),
+        # The Admin app — same five files, with a shield rather than a shop awning.
+        ADMIN_ICONS / "icon-192.png": render_admin(192, rounded=True, scale=0.64),
+        ADMIN_ICONS / "icon-512.png": render_admin(512, rounded=True, scale=0.64),
+        ADMIN_ICONS / "icon-maskable-512.png": render_admin(512, rounded=False, scale=0.52),
+        ADMIN_ICONS / "apple-touch-icon.png": render_admin(180, rounded=False, scale=0.6),
+        ADMIN_ICONS / "play-store-512.png": render_admin(512, rounded=False, scale=0.6),
     }
     for path, img in outputs.items():
         img.save(path, "PNG", optimize=True)

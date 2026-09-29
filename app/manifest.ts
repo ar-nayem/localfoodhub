@@ -1,19 +1,24 @@
 import type { MetadataRoute } from "next";
 import { headers } from "next/headers";
-import { brand, businessBrand } from "@/lib/brand";
-import { isBusinessHost } from "@/lib/hosts";
+import { adminBrand, brand, businessBrand } from "@/lib/brand";
+import { classifyHost, type AppSurface } from "@/lib/hosts";
 
 // Served at /manifest.webmanifest and linked from every page automatically. This is what
 // makes the site installable, and what PWABuilder reads to generate the Android package
 // for the Play Store — changing `id` or `start_url` after an app is published makes
 // Android treat it as a different app, so leave both alone once it's live.
 //
-// There are two Android apps and this one file serves both: the answer depends on which
+// There are three Android apps and this one file serves all: the answer depends on which
 // hostname asked (see lib/hosts.ts). Point PWABuilder at the customer hostname for the
-// customer app and at the Business hostname for the Business app. Reading the request
-// makes this route dynamic, which is fine — it's a few hundred bytes.
+// customer app, the Business hostname for Business, and the Admin hostname for Admin.
+// Reading the request makes this route dynamic, which is fine — it's a few hundred bytes.
 export default function manifest(): MetadataRoute.Manifest {
-  if (isBusinessHost(headers().get("host"))) return businessManifest();
+  return manifestForSurface(classifyHost(headers().get("host")));
+}
+
+export function manifestForSurface(surface: AppSurface): MetadataRoute.Manifest {
+  if (surface === "business") return businessManifest();
+  if (surface === "admin") return adminManifest();
 
   return {
     id: "/",
@@ -63,6 +68,34 @@ function businessManifest(): MetadataRoute.Manifest {
       { name: "Orders", short_name: "Orders", url: "/vendor/orders", icons: shortcutIcon },
       { name: "Kitchen display", short_name: "Kitchen", url: "/vendor/kitchen", icons: shortcutIcon },
       { name: "Scan to verify", short_name: "Scan", url: "/vendor/scan", icons: shortcutIcon },
+    ],
+  };
+}
+
+function adminManifest(): MetadataRoute.Manifest {
+  const shortcutIcon = [{ src: "/icons/admin/icon-192.png", sizes: "192x192", type: "image/png" }];
+  return {
+    id: "/",
+    name: adminBrand.name,
+    short_name: adminBrand.appShortName,
+    description: adminBrand.description,
+    start_url: adminBrand.startUrl,
+    scope: "/",
+    display: "standalone",
+    orientation: "any",
+    background_color: brand.backgroundHex,
+    theme_color: brand.primaryColorHex,
+    lang: "en",
+    categories: ["business", "productivity"],
+    icons: [
+      { src: "/icons/admin/icon-192.png", sizes: "192x192", type: "image/png", purpose: "any" },
+      { src: "/icons/admin/icon-512.png", sizes: "512x512", type: "image/png", purpose: "any" },
+      { src: "/icons/admin/icon-maskable-512.png", sizes: "512x512", type: "image/png", purpose: "maskable" },
+    ],
+    shortcuts: [
+      { name: "Shops", short_name: "Shops", url: "/admin/shops", icons: shortcutIcon },
+      { name: "Locations", short_name: "Locations", url: "/admin/locations", icons: shortcutIcon },
+      { name: "Analytics", short_name: "Analytics", url: "/admin/analytics", icons: shortcutIcon },
     ],
   };
 }
