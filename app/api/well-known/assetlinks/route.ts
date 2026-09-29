@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { headers } from "next/headers";
-import { isBusinessHost } from "@/lib/hosts";
+import { classifyHost } from "@/lib/hosts";
+import { assetLinkForSurface } from "@/lib/android/assetlinks";
 
 // Served at /.well-known/assetlinks.json via the rewrite in next.config.js.
 //
@@ -14,7 +15,7 @@ import { isBusinessHost } from "@/lib/hosts";
 // with a *second* key whose fingerprint must be listed too. Adding one is an .env edit
 // plus a restart, not a code change.
 //
-// There are two Android apps, one per hostname, and Android fetches this file from the
+// There are three Android apps, one per hostname, and Android fetches this file from the
 // hostname the app is bound to — so each host answers with only its own app's package:
 //
 //   Customer hostname:
@@ -23,22 +24,16 @@ import { isBusinessHost } from "@/lib/hosts";
 //   Business hostname:
 //     ANDROID_BUSINESS_PACKAGE_NAME=top.arnayem.shokherkhabar.business
 //     ANDROID_BUSINESS_SHA256_CERT_FINGERPRINTS=AB:CD:...,12:34:...
+//   Admin hostname:
+//     ANDROID_ADMIN_PACKAGE_NAME=top.arnayem.shokherkhabar.admin
+//     ANDROID_ADMIN_SHA256_CERT_FINGERPRINTS=AB:CD:...,12:34:...
 
 export const dynamic = "force-dynamic";
 
-const FINGERPRINT = /^([0-9A-F]{2}:){31}[0-9A-F]{2}$/;
-
 export function GET() {
-  const business = isBusinessHost(headers().get("host"));
-  const packageName = (business ? process.env.ANDROID_BUSINESS_PACKAGE_NAME : process.env.ANDROID_PACKAGE_NAME)?.trim();
-  const fingerprints = (
-    (business ? process.env.ANDROID_BUSINESS_SHA256_CERT_FINGERPRINTS : process.env.ANDROID_SHA256_CERT_FINGERPRINTS) ?? ""
-  )
-    .split(",")
-    .map((f) => f.trim().toUpperCase())
-    .filter((f) => FINGERPRINT.test(f));
+  const assetLinks = assetLinkForSurface(classifyHost(headers().get("host")), process.env);
 
-  if (!packageName || fingerprints.length === 0) {
+  if (!assetLinks) {
     return NextResponse.json(
       { error: "Android app link not configured yet" },
       { status: 404, headers: { "Cache-Control": "no-store" } }
@@ -46,16 +41,7 @@ export function GET() {
   }
 
   return NextResponse.json(
-    [
-      {
-        relation: ["delegate_permission/common.handle_all_urls"],
-        target: {
-          namespace: "android_app",
-          package_name: packageName,
-          sha256_cert_fingerprints: fingerprints,
-        },
-      },
-    ],
+    assetLinks,
     { headers: { "Cache-Control": "public, max-age=300" } }
   );
 }
