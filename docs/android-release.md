@@ -4,9 +4,9 @@ One Next.js deployment serves three HTTPS origins. Each origin has a distinct Tr
 
 | App | HTTPS origin | Start route | Android package |
 | --- | --- | --- | --- |
-| Customer | `https://shokherkhabar.arnayem.top` | `/` | `top.arnayem.shokherkhabar` |
-| Business | `https://business.shokherkhabar.arnayem.top` | `/vendor` | `top.arnayem.shokherkhabar.business` |
-| Admin | `https://admin.shokherkhabar.arnayem.top` | `/admin` | `top.arnayem.shokherkhabar.admin` |
+| শখের খাবার | `https://shokherkhabar.arnayem.top` | `/` | `top.arnayem.shokherkhabar` |
+| শখের খাবার Business | `https://business.shokherkhabar.arnayem.top` | `/vendor` | `top.arnayem.shokherkhabar.business` |
+| শখের খাবার Admin | `https://admin.shokherkhabar.arnayem.top` | `/admin` | `top.arnayem.shokherkhabar.admin` |
 
 ## Local release build
 
