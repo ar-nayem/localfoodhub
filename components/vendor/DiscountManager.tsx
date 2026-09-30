@@ -101,7 +101,7 @@ export function DiscountManager() {
     <div className="max-w-2xl">
       <h1 className="mb-1 text-xl font-bold">Discounts</h1>
       <p className="mb-5 text-sm text-muted-foreground">
-        Shop-wide promo codes. Per-item discounts are set directly on a product's price in{" "}
+        Shop-wide promo codes. Per-item discounts are set directly on a product&apos;s price in{" "}
         <span className="font-medium">Menu</span>.
       </p>
 

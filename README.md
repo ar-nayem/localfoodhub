@@ -21,19 +21,22 @@ npm run dev
 
 Runs on **http://localhost:4410** (pinned port — see `package.json`).
 
-### Two apps, one server
+### Three apps, one server
 
-The same Next.js process serves two hostnames, and each is its own Play Store app:
+The same Next.js process serves three hostnames, and each has its own Android app:
 
-| App | Local | Production |
-|---|---|---|
-| শখের খাবার (customers) | http://localhost:4410 | https://shokherkhabar.arnayem.top |
-| শখের খাবার Business (shop owners/staff) | http://business.localhost:4410 | https://business-shokherkhabar.arnayem.top |
+| App | Role | Local | Production |
+|---|---|---|---|
+| শখের খাবার | Customers | http://localhost:4410 | https://shokherkhabar.arnayem.top |
+| শখের খাবার Business | Shop owners and staff | http://business.localhost:4410 | https://business.shokherkhabar.arnayem.top |
+| শখের খাবার Admin | Platform administrators | http://admin.localhost:4410 | https://admin.shokherkhabar.arnayem.top |
 
-`NEXT_PUBLIC_BUSINESS_URL` switches the split on (see `lib/hosts.ts` and `middleware.ts`);
-leave it empty and everything is served from one host. Shop owners sign in at
-`/vendor/login` on the Business host. The Android projects that wrap each site are built
-outside this repo with Bubblewrap (Trusted Web Activity).
+`NEXT_PUBLIC_BUSINESS_URL` and `NEXT_PUBLIC_ADMIN_URL` configure the additional hosts
+(see `lib/hosts.ts` and `middleware.ts`). Shop owners sign in at `/vendor/login` on the
+Business host; administrators use `/login` on the Admin host. The three Trusted Web
+Activity projects and their local release artifacts are managed under `android/`.
+See [Android release and Play Store handoff](docs/android-release.md) for build,
+deployment, Digital Asset Links, and upload instructions.
 
 ### Seeded accounts
 

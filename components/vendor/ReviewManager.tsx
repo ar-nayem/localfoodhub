@@ -24,6 +24,7 @@ type Filter = "all" | "5" | "4" | "3" | "2" | "1" | "photos" | "videos" | "unans
 
 export function ReviewManager() {
   const { shop } = useVendorShop();
+  const shopId = shop?.id;
   const [reviews, setReviews] = useState<ReviewRow[]>([]);
   const [stats, setStats] = useState<{
     total: number;
@@ -37,14 +38,14 @@ export function ReviewManager() {
   const [responseText, setResponseText] = useState("");
 
   useEffect(() => {
-    if (!shop) return;
-    fetch(`/api/vendor/reviews?shopId=${shop.id}`)
+    if (!shopId) return;
+    fetch(`/api/vendor/reviews?shopId=${shopId}`)
       .then((r) => r.json())
       .then((d) => {
         setReviews(d.reviews);
         setStats(d.stats);
       });
-  }, [shop?.id]);
+  }, [shopId]);
 
   async function submitResponse(reviewId: string) {
     if (!responseText.trim()) return;

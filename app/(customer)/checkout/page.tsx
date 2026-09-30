@@ -75,7 +75,7 @@ export default function CheckoutPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  function useSavedAddress(addr: SavedAddress) {
+  function selectSavedAddress(addr: SavedAddress) {
     setSelectedAddressId(addr.id);
     setGuestName(addr.recipientName || "");
     setGuestPhone(addr.recipientPhone || "");
@@ -253,7 +253,7 @@ export default function CheckoutPage() {
               {savedAddresses.map((addr) => (
                 <button
                   key={addr.id}
-                  onClick={() => useSavedAddress(addr)}
+                  onClick={() => selectSavedAddress(addr)}
                   className={cn(
                     "whitespace-nowrap rounded-full border px-3.5 py-1.5 text-xs font-semibold",
                     selectedAddressId === addr.id ? "border-primary bg-primary/10 text-primary" : "border-border text-muted-foreground"
