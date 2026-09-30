@@ -1,0 +1,8 @@
+# Copy only when importing an existing upload key. For a new key use npm run android:key.
+# Keep android/signing.properties and the keystore private and backed up together.
+# Values are literal (no Java-properties escapes); storeFile is relative to this file.
+# All fields are required. Never commit the filled file or keystore.
+storeFile=
+storePassword=
+keyAlias=
+keyPassword=

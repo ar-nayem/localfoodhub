@@ -6,6 +6,9 @@
     "seed": "tsx prisma/seed.ts"
   },
   "scripts": {
+    "android:key": "node scripts/android/create-upload-key.mjs",
+    "android:build": "node scripts/android/build-releases.mjs",
+    "android:verify": "node scripts/android/verify-releases.mjs",
     "android:generate": "node scripts/android/generate-projects.mjs",
     "dev": "next dev -p 4410",
     "build": "NODE_OPTIONS=--max-old-space-size=1400 next build",
