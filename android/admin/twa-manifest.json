@@ -1,0 +1,27 @@
+{
+  "packageId": "top.arnayem.shokherkhabar.admin",
+  "host": "admin.shokherkhabar.arnayem.top",
+  "name": "শখের খাবার Admin",
+  "launcherName": "শখের খাবার Admin",
+  "display": "standalone",
+  "themeColor": "#20693F",
+  "navigationColor": "#FAF8F4",
+  "backgroundColor": "#FAF8F4",
+  "enableNotifications": true,
+  "startUrl": "/admin",
+  "iconUrl": "../../public/icons/admin/icon-512.png",
+  "maskableIconUrl": "../../public/icons/admin/icon-maskable-512.png",
+  "splashScreenFadeOutDuration": 300,
+  "signingKey": {
+    "path": "../../upload.keystore",
+    "alias": "upload"
+  },
+  "appVersion": "1.0.0",
+  "appVersionCode": 1,
+  "orientation": "any",
+  "fullScopeUrl": "https://admin.shokherkhabar.arnayem.top/",
+  "fallbackType": "customtabs",
+  "shortcuts": [],
+  "features": {},
+  "additionalTrustedOrigins": []
+}

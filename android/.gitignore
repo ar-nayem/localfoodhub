@@ -1,0 +1,6 @@
+*/generated/
+release-output/
+signing.properties
+*.jks
+*.keystore
+.bubblewrap/
