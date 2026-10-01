@@ -13,13 +13,31 @@ deliberate and disclosed, not a shortcut discovered along the way.
 
 ```bash
 npm install
-cp .env.example .env   # then edit JWT_SECRET for anything beyond local dev
+cp .env.example .env
+```
+
+Before starting the server, replace the three production origin values in `.env` with
+these exact local overrides. All three hosts use the same local process and port:
+
+```dotenv
+NEXT_PUBLIC_BASE_URL="http://localhost:4410"
+NEXT_PUBLIC_BUSINESS_URL="http://business.localhost:4410"
+NEXT_PUBLIC_ADMIN_URL="http://admin.localhost:4410"
+```
+
+Set a private `JWT_SECRET` for anything beyond local development. Then run:
+
+```bash
 npm run db:push
 npm run db:seed
 npm run dev
 ```
 
-Runs on **http://localhost:4410** (pinned port — see `package.json`).
+Runs on **http://localhost:4410** (pinned port — see `package.json`). Open the Business
+and Admin hosts below to exercise host routing and separate browser sessions. If your
+system does not resolve `*.localhost`, map `business.localhost` and `admin.localhost`
+to `127.0.0.1` in your hosts file. Restart the dev server after changing origins;
+production builds need a rebuild. Use the seeded password accounts for local checks.
 
 ### Three apps, one server
 

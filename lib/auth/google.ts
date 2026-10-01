@@ -1,4 +1,5 @@
 import { appBaseUrl } from "@/lib/qr/token";
+import { classifyHost, originFor } from "@/lib/hosts";
 
 const GOOGLE_AUTH_URL = "https://accounts.google.com/o/oauth2/v2/auth";
 const GOOGLE_TOKEN_URL = "https://oauth2.googleapis.com/token";
@@ -13,17 +14,25 @@ export function isGoogleAuthConfigured(): boolean {
   return !!(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET);
 }
 
-/** Must match a redirect URI registered on the OAuth client in Google Cloud, exactly —
- * built from the app's known public origin rather than the incoming request, which behind
- * nginx resolves to the internal bind address. */
-export function googleRedirectUri(): string {
-  return `${appBaseUrl()}/api/auth/google/callback`;
+/** Host only selects a configured origin; never trust request URLs or forwarded origins.
+ * nginx must preserve Host because req.url can contain the internal bind address. */
+export function googleAuthOrigin(host: string | null): string {
+  return originFor(classifyHost(host)) ?? new URL(appBaseUrl()).origin;
 }
 
-export function googleAuthorizeUrl(state: string): string {
+export function safeGoogleReturnPath(path: string | null | undefined): string | undefined {
+  return path?.startsWith("/") && !path.startsWith("//") && !/[\\\x00-\x20]/.test(path) ? path : undefined;
+}
+
+/** Must exactly match a redirect URI registered on the Google OAuth client. */
+export function googleRedirectUri(origin: string): string {
+  return `${origin}/api/auth/google/callback`;
+}
+
+export function googleAuthorizeUrl(state: string, origin: string): string {
   const params = new URLSearchParams({
     client_id: process.env.GOOGLE_CLIENT_ID!,
-    redirect_uri: googleRedirectUri(),
+    redirect_uri: googleRedirectUri(origin),
     response_type: "code",
     scope: "openid email profile",
     state,
@@ -45,7 +54,7 @@ export interface GoogleProfile {
 
 /** Exchanges the one-time code for tokens, then reads the profile. Throws on any failure —
  * callers turn that into a redirect back to /login with an error. */
-export async function fetchGoogleProfile(code: string): Promise<GoogleProfile> {
+export async function fetchGoogleProfile(code: string, origin: string): Promise<GoogleProfile> {
   const tokenRes = await fetch(GOOGLE_TOKEN_URL, {
     method: "POST",
     headers: { "Content-Type": "application/x-www-form-urlencoded" },
@@ -53,7 +62,7 @@ export async function fetchGoogleProfile(code: string): Promise<GoogleProfile> {
       code,
       client_id: process.env.GOOGLE_CLIENT_ID!,
       client_secret: process.env.GOOGLE_CLIENT_SECRET!,
-      redirect_uri: googleRedirectUri(),
+      redirect_uri: googleRedirectUri(origin),
       grant_type: "authorization_code",
     }),
   });

@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { mkdtemp, readFile, writeFile, rm } from "node:fs/promises";
+import { mkdtemp, readFile, writeFile, rm, copyFile, access } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import test from "node:test";
@@ -73,4 +73,21 @@ test("artifact verification rejects missing, empty, extra files and mismatched s
   assertFingerprint("AA:".repeat(31) + "AA", "aa".repeat(32));
   assert.throws(() => assertFingerprint("aa".repeat(32), "bb".repeat(32)), /fingerprint/);
   assert.throws(() => assertFingerprint("", ""), /fingerprint/);
+});
+
+test("release verification rejects signed AABs swapped between application filenames", async (t) => {
+  const { verifyReleases } = await import("../scripts/android/verify-releases.mjs");
+  const { outputRoot, releaseArtifacts, signingPath } = await import("../scripts/android/build-releases.mjs");
+  // This release integration gate uses existing local artifacts and reads the upload key.
+  // A clean checkout without a built release can still run the portable unit suite.
+  try { await access(signingPath); await access(outputRoot); }
+  catch { t.skip("Build the local signed release to run the swapped-bundle integration gate"); return; }
+  const directory = await mkdtemp(join(tmpdir(), "swapped-aab-release-"));
+  t.after(() => rm(directory, { recursive: true, force: true }));
+  for (const artifact of releaseArtifacts()) {
+    const source = artifact.name === "shokher-khabar-customer.aab" ? "shokher-khabar-admin.aab"
+      : artifact.name === "shokher-khabar-admin.aab" ? "shokher-khabar-customer.aab" : artifact.name;
+    await copyFile(join(outputRoot, source), join(directory, artifact.name));
+  }
+  await assert.rejects(verifyReleases({ directory }), /shokher-khabar-customer\.aab: wrong application ID \(top\.arnayem\.shokherkhabar\.admin\)/);
 });

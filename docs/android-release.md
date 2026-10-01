@@ -49,11 +49,31 @@ The six signed files are generated in ignored `android/release-output/`:
 | `android/release-output/shokher-khabar-business.aab` | `android/release-output/shokher-khabar-business.apk` |
 | `android/release-output/shokher-khabar-admin.aab` | `android/release-output/shokher-khabar-admin.apk` |
 
-Upload the **AAB** for each app to its matching Play Console package. The **APK** is for direct local device testing; it is not the Play upload. `npm run android:verify` checks all six signatures, their upload certificate, the three APK package IDs, and the exact file set.
+Upload the **AAB** for each app to its matching Play Console package. The **APK** is for direct local device testing; it is not the Play upload. `npm run android:verify` checks all six signatures, their upload certificate, all six application IDs, and the exact file set. For AAB identity, the verifier uses the JDK `jar` tool to copy the base protobuf manifest/resource table into a temporary inspection archive, then Android SDK `aapt2 dump packagename` to read the actual package. The original signed bundles remain unchanged; missing tools, unreadable manifests, or wrong packages fail verification. Install the SDK build-tools (including AAPT2) and a full JDK (including `jar`) before running it.
 
 ## Production deployment and Digital Asset Links
 
 Point DNS for all three hostnames at the same application deployment. Provide a valid publicly trusted HTTPS certificate for **each** hostname, keep HTTPS and its certificate chain valid, and preserve the incoming `Host` header through the reverse proxy: host routing and `assetlinks.json` select the app by that header. Deploy the Next.js build with the exact three `NEXT_PUBLIC_*_URL` values shown above; changing those requires a rebuild. Set a production `DATABASE_URL` to persistent storage, a strong private `JWT_SECRET`, and any SMTP/Google credentials used by the site. Do not use the local verification SQLite path or the example JWT secret for production. Make uploaded media persistent as well.
+
+### Google OAuth callback registration
+
+Before enabling Google sign-in, register **both exact authorized redirect URIs** on the
+Google Cloud web OAuth client used by `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET`:
+
+```text
+https://shokherkhabar.arnayem.top/api/auth/google/callback
+https://admin.shokherkhabar.arnayem.top/api/auth/google/callback
+```
+
+Customer and Admin sign-in each begin at `/api/auth/google` on their own hostname.
+The callback, token exchange redirect URI, state cookie, and resulting session all
+stay on that initiating configured origin. Keep the reverse proxy's `Host` forwarding
+correct; do not replace it with the internal bind address. Business retains its separate
+`/vendor/login` flow and needs no Google callback registration. Registration is an
+external Google Cloud operator action; source changes do not create it automatically.
+After registration and deployment, test Google login from both customer and admin,
+including landing on `/admin` with an authorized admin account. Local development
+origins are documented in the README; use password login for the local smoke checks.
 
 Set the package variables and the **same upload certificate** on all three matching fingerprint variables before checking Digital Asset Links. These are public certificate fingerprints, not signing passwords:
 

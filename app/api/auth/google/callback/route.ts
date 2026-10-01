@@ -4,10 +4,12 @@ import { signSession, sessionCookieOptions, SESSION_COOKIE_NAME } from "@/lib/au
 import {
   fetchGoogleProfile,
   isGoogleAuthConfigured,
+  googleAuthOrigin,
+  safeGoogleReturnPath,
   GOOGLE_STATE_COOKIE,
   GOOGLE_RETURN_COOKIE,
 } from "@/lib/auth/google";
-import { appBaseUrl } from "@/lib/qr/token";
+import { isBusinessHost } from "@/lib/hosts";
 import type { Role } from "@/lib/constants";
 
 function landingFor(role: string, requested: string | undefined): string {
@@ -18,8 +20,11 @@ function landingFor(role: string, requested: string | undefined): string {
 }
 
 export async function GET(req: NextRequest) {
-  const base = appBaseUrl();
+  const host = req.headers.get("host");
+  const base = googleAuthOrigin(host);
+  if (isBusinessHost(host)) return NextResponse.redirect(new URL("/vendor/login", base));
   const fail = (reason: string) => NextResponse.redirect(new URL(`/login?error=${reason}`, base));
+  if (host?.toLowerCase() !== new URL(base).host.toLowerCase()) return fail("google_state");
 
   if (!isGoogleAuthConfigured()) return fail("google_unavailable");
 
@@ -38,7 +43,7 @@ export async function GET(req: NextRequest) {
 
   let profile;
   try {
-    profile = await fetchGoogleProfile(code);
+    profile = await fetchGoogleProfile(code, base);
   } catch (err) {
     console.error("[google-auth] profile fetch failed:", err);
     return fail("google_failed");
@@ -85,9 +90,9 @@ export async function GET(req: NextRequest) {
     shopIds: user.shopStaff.map((s) => s.shopId),
   });
 
-  const next = req.cookies.get(GOOGLE_RETURN_COOKIE)?.value;
+  const next = safeGoogleReturnPath(req.cookies.get(GOOGLE_RETURN_COOKIE)?.value);
   const response = NextResponse.redirect(new URL(landingFor(user.role, next), base));
-  response.cookies.set(SESSION_COOKIE_NAME, token, sessionCookieOptions());
+  response.cookies.set(SESSION_COOKIE_NAME, token, { ...sessionCookieOptions(), secure: base.startsWith("https://") });
   response.cookies.delete(GOOGLE_STATE_COOKIE);
   response.cookies.delete(GOOGLE_RETURN_COOKIE);
   return response;

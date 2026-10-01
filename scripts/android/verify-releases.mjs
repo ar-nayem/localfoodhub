@@ -1,5 +1,6 @@
 import { X509Certificate } from "node:crypto";
-import { readdir, lstat } from "node:fs/promises";
+import { readdir, lstat, mkdtemp, rm } from "node:fs/promises";
+import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { pathToFileURL } from "node:url";
 import { outputRoot, releaseArtifacts, loadSigning, loadToolchain, runCommand, findSdkTool, signingSecrets, signingEnvironment } from "./build-releases.mjs";
@@ -21,20 +22,39 @@ export function assertFingerprint(actual, expected) {
   if (!/^[a-f0-9]{64}$/.test(a) || !/^[a-f0-9]{64}$/.test(b) || a !== b) throw new Error("Signer SHA-256 fingerprint mismatch");
 }
 
-export async function verifyReleases() {
-  await checkArtifactFiles();
+async function aabApplicationId(path, toolchain, aapt2, options) {
+  const directory = await mkdtemp(join(tmpdir(), "aab-manifest-"));
+  try {
+    const jar = join(toolchain.javaHome, "bin/jar");
+    // AAB manifests use protobuf XML. Repackage only the base manifest and resource
+    // table into the layout AAPT2 understands; never modify or resign the source AAB.
+    await runCommand(jar, ["--extract", "--file", resolve(path),
+      "base/manifest/AndroidManifest.xml", "base/resources.pb"], { ...options, cwd: directory });
+    const inspection = join(directory, "manifest.apk");
+    await runCommand(jar, ["--create", "--file", inspection,
+      "-C", join(directory, "base/manifest"), "AndroidManifest.xml",
+      "-C", join(directory, "base"), "resources.pb"], options);
+    return (await runCommand(aapt2, ["dump", "packagename", inspection], options)).trim();
+  } finally {
+    await rm(directory, { recursive: true, force: true });
+  }
+}
+
+export async function verifyReleases({ directory = outputRoot } = {}) {
+  await checkArtifactFiles(directory);
   const signing = await loadSigning();
   const toolchain = await loadToolchain();
   const options = { env: signingEnvironment(toolchain, signing), sensitive: signingSecrets(signing) };
   const apksigner = await findSdkTool(toolchain.sdk, "apksigner");
   const apkanalyzer = await findSdkTool(toolchain.sdk, "apkanalyzer");
+  const aapt2 = await findSdkTool(toolchain.sdk, "aapt2");
   const keytool = join(toolchain.javaHome, "bin/keytool");
   const certificate = await runCommand(keytool, ["-exportcert", "-rfc", "-keystore", signing.storeFile,
     "-alias", signing.keyAlias, "-storepass:env", "RELEASE_STORE_PASSWORD"], options);
   const fingerprint = new X509Certificate(certificate).fingerprint256;
   console.log(`Upload certificate SHA-256: ${fingerprint}`);
   for (const artifact of releaseArtifacts()) {
-    const path = join(outputRoot, artifact.name);
+    const path = join(directory, artifact.name);
     if (artifact.extension === "apk") {
       const result = await runCommand(apksigner, ["verify", "--verbose", "--print-certs", path], options);
       const signers = [...result.matchAll(/Signer #\d+ certificate SHA-256 digest:\s*([a-fA-F0-9]+)/g)];
@@ -52,7 +72,9 @@ export async function verifyReleases() {
       const certificates = certs.match(/-----BEGIN CERTIFICATE-----[\s\S]*?-----END CERTIFICATE-----/g) || [];
       if (certificates.length !== 1) throw new Error(`${artifact.name}: expected exactly one AAB signer certificate`);
       assertFingerprint(new X509Certificate(certificates[0]).fingerprint256, fingerprint);
-      console.log(`${artifact.name}: signature OK; SHA-256 signer matches`);
+      const packageId = await aabApplicationId(path, toolchain, aapt2, options);
+      if (packageId !== artifact.app.packageId) throw new Error(`${artifact.name}: wrong application ID (${packageId})`);
+      console.log(`${artifact.name}: signature OK; ${packageId}; SHA-256 signer matches`);
     }
   }
   console.log("Verified exactly six release artifacts.");
