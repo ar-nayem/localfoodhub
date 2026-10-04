@@ -60,3 +60,63 @@ No actionable P0, P1, or P2 differences remain for the supported pickup checkout
 - [x] Browser-rendered mobile and desktop evidence captured.
 
 final result: passed
+
+---
+
+# Customer marketplace visual refresh design QA — 2026-10-04
+
+## Comparison target
+
+- **Source visual truth:** `/Users/apple/.codex/generated_images/01a0ec3e-230a-7d33-86fb-9bc7b45538c2/exec-bc48401a-d9b5-4aec-9752-74c46f1d12c4.png` (the bright boutique-market direction selected for implementation).
+- **Implementation:** `https://shokherkhabar.arnayem.top/` at the deployed revision `0b919ee489bb43ea68197501807ca823b845ca21`.
+- **Browser-rendered evidence:** in-app Browser captures taken after reload at the live URL: the top-state capture shows the search field, live hero, shortcut cards, food posters, and floating navigation; the listing-state capture confirms the lower marketplace content renders with the deployed service.
+
+## Normalization and state
+
+- Source: 853 × 1844 pixels, portrait mobile composition.
+- Implementation: browser mobile viewport, content-only page capture; browser chrome excluded.
+- State: anonymous customer home, live shop/product data, location control not granted a device location.
+
+## Fidelity review
+
+### Fonts and typography
+
+The customer home preserves the existing readable system stack while raising hierarchy through a strong hero title, compact section titles, and consistently weighted action labels. Long item names still truncate rather than overlap.
+
+### Spacing and layout rhythm
+
+The live screen has a floating 56px search control, a short immersive hero, balanced four-column shortcut cards, compact poster cards, and a low-profile floating navigation dock. The two-column shop grid increases discovery density without hiding persistent controls.
+
+### Colors and visual tokens
+
+Warm ivory, deep green, saffron, and softened supporting tints follow the selected direction while continuing to use the platform’s semantic primary, surface, and warning colors. Interactive controls retain visible contrast.
+
+### Image quality and asset fidelity
+
+The live customer home uses five generated production raster assets: a biryani discovery hero, three named menu-dish artworks, and a restaurant poster. The incorrect pipe-cleaner, diploma, and food emoji visuals no longer appear on the refreshed customer-home feed. Standard operational controls use the existing accessible icon library.
+
+### Copy and content
+
+The working routes and customer copy remain intact: search, discovery, Food/Dine-in/Takeaway/Offers shortcuts, item links, shop links, QR ordering, cart, alerts, and navigation all remain available.
+
+## Findings and disposition
+
+- **P3:** The concept’s illustrated shortcut symbols are represented by the project’s accessible icon set rather than generated raster mini-illustrations. The stronger surfaces, motion, and food imagery carry the premium treatment without reducing recognizability.
+- **P3:** Only the known demo dishes have dedicated artwork; other merchant-provided images continue to render as supplied. The shared fallback no longer uses emoji.
+
+No actionable P0, P1, or P2 differences remain for the deployed customer-home state.
+
+## Primary interactions tested
+
+1. Reloaded the live customer homepage after the service restart.
+2. Verified the search field, discovery link, four quick-access links, food-card links, shop links, and bottom navigation are present in the live accessibility tree.
+3. Captured top and listing states from the deployed mobile page.
+
+## Implementation checklist
+
+- [x] Generated premium customer-home food artwork is served from the production app.
+- [x] Generic food-emoji fallback removed from customer media handling.
+- [x] Customer home uses compact shop posters and a floating bottom navigation treatment.
+- [x] Production build, automated tests, PM2 restart, and live browser rendering verified.
+
+final result: passed
