@@ -84,8 +84,8 @@ export function LocationPill() {
       onClick={() => router.push(`/location?returnTo=${encodeURIComponent(pathname || "/")}`)}
       className="flex min-w-0 items-center gap-2 text-left"
     >
-      <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
-        <MapPin size={17} />
+      <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl border border-primary/10 bg-primary text-primary-foreground shadow-sm">
+        <MapPin size={18} strokeWidth={2.3} />
       </span>
       <span className="min-w-0 leading-tight">
         <span className="block text-[11px] text-muted-foreground">Your Location</span>

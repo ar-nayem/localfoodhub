@@ -22,7 +22,7 @@ export interface ShopCardData {
   supportsDineIn: boolean;
 }
 
-export function ShopCard({ shop }: { shop: ShopCardData }) {
+export function ShopCard({ shop, preferCuratedArtwork = false }: { shop: ShopCardData; preferCuratedArtwork?: boolean }) {
   const modes = [
     shop.supportsDelivery && "Delivery",
     shop.supportsPickup && "Pickup",
@@ -35,11 +35,12 @@ export function ShopCard({ shop }: { shop: ShopCardData }) {
       className="block overflow-hidden rounded-2xl border border-border bg-surface shadow-sm transition-transform active:scale-[0.99]"
     >
       <div className="relative aspect-[16/9] w-full bg-muted">
-        {shop.coverUrl ? (
+        {shop.coverUrl && !preferCuratedArtwork ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img src={shop.coverUrl} alt={shop.name} className="h-full w-full object-cover" />
         ) : (
-          <div className="flex h-full w-full items-center justify-center text-3xl">🍽️</div>
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src="/food-artwork/bangladeshi-restaurant.png" alt={shop.name} className="h-full w-full object-cover" />
         )}
         {shop.status !== "ACTIVE" && (
           <div className="absolute inset-0 flex items-center justify-center bg-black/50">

@@ -1,6 +1,5 @@
 import Link from "next/link";
-import Image from "next/image";
-import { Truck, ShoppingBag, ConciergeBell, QrCode, Star, BadgePercent, Utensils } from "lucide-react";
+import { ArrowUpRight, Truck, ShoppingBag, ConciergeBell, QrCode, Star, BadgePercent, Utensils, Sparkles } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { brand } from "@/lib/brand";
 import { SearchBar } from "@/components/customer/SearchBar";
@@ -74,16 +73,18 @@ export default async function HomePage() {
         <Link
           href="/discover"
           aria-label="Explore food recommendations"
-          className="group relative block aspect-[2.7/1] w-full overflow-hidden rounded-2xl transition-transform active:scale-[0.99]"
+          className="group relative block min-h-[11.5rem] overflow-hidden rounded-[1.75rem] border border-primary/10 bg-[#F4E9D4] shadow-[0_14px_34px_rgba(18,74,49,0.12)] transition duration-300 hover:-translate-y-0.5 hover:shadow-[0_18px_40px_rgba(18,74,49,0.18)] active:scale-[0.99] sm:min-h-[17rem]"
         >
-          <Image
-            src="/explore-banner.png"
-            alt=""
-            fill
-            priority
-            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 100vw, 1152px"
-            className="object-cover object-center transition-opacity group-hover:opacity-95"
-          />
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/food-artwork/discover-biryani-hero.png" alt="" className="absolute inset-0 h-full w-full object-cover object-center transition-transform duration-700 group-hover:scale-[1.03]" />
+          <span className="absolute inset-y-0 left-0 w-[63%] bg-[#FFF8EA]/88" />
+          <span className="absolute left-[44%] top-3 h-2.5 w-2.5 animate-ping rounded-full bg-warning/80" />
+          <div className="relative z-10 flex h-full max-w-[61%] flex-col justify-center px-5 py-5 sm:px-10">
+            <span className="mb-2 flex w-fit items-center gap-1 rounded-full bg-primary/10 px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.14em] text-primary sm:text-xs"><Sparkles size={12} /> Discover</span>
+            <h2 className="text-[1.55rem] font-extrabold leading-[0.94] tracking-tight text-secondary sm:text-4xl">Not sure<br />what to eat?</h2>
+            <p className="mt-2 hidden max-w-xs text-sm font-medium leading-snug text-secondary/70 sm:block">Tell us your mood and discover food made for today.</p>
+            <span className="mt-4 inline-flex w-fit items-center gap-1.5 rounded-full bg-primary px-3.5 py-2 text-xs font-bold text-primary-foreground shadow-sm sm:px-5 sm:py-2.5 sm:text-sm">Explore now <ArrowUpRight size={15} /></span>
+          </div>
         </Link>
       </section>
 
@@ -95,10 +96,10 @@ export default async function HomePage() {
             <Link
               key={label}
               href={href}
-              className="group flex min-w-0 flex-col items-center justify-center gap-2 rounded-2xl border border-border bg-surface px-1 py-3.5 text-center shadow-sm transition duration-150 hover:-translate-y-0.5 hover:shadow-md active:scale-[0.97] sm:flex-row sm:gap-3 sm:px-4 sm:py-4"
+              className="group flex min-w-0 flex-col items-center justify-center gap-2 rounded-[1.35rem] border border-primary/10 bg-surface px-1 py-3.5 text-center shadow-[0_6px_18px_rgba(18,74,49,0.07)] transition duration-300 hover:-translate-y-1 hover:border-primary/25 hover:shadow-[0_12px_24px_rgba(18,74,49,0.13)] active:scale-[0.97] sm:flex-row sm:gap-3 sm:px-4 sm:py-4"
             >
               <span
-                className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl ring-1 ring-inset ring-black/[0.04] transition-transform duration-150 group-hover:scale-105 ${tint}`}
+                className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl ring-1 ring-inset ring-black/[0.04] transition-transform duration-300 group-hover:-rotate-3 group-hover:scale-110 ${tint}`}
               >
                 <Icon size={22} strokeWidth={1.9} />
               </span>
@@ -122,10 +123,10 @@ export default async function HomePage() {
               <Link
                 key={p.id}
                 href={`/s/${p.shop.slug}/product/${p.id}`}
-                className="w-[9.5rem] shrink-0 overflow-hidden rounded-2xl border border-border bg-surface shadow-sm sm:w-auto"
+                className="w-[10.25rem] shrink-0 overflow-hidden rounded-[1.35rem] border border-primary/10 bg-surface shadow-[0_6px_18px_rgba(18,74,49,0.08)] transition duration-300 hover:-translate-y-1 hover:shadow-[0_13px_25px_rgba(18,74,49,0.16)] sm:w-auto"
               >
                 <div className="aspect-[4/3] w-full">
-                  <FoodThumb src={p.imageUrl} label={p.name} rounded="rounded-none" glyphClassName="text-4xl" />
+                  <FoodThumb src={p.imageUrl} label={p.name} preferArtwork rounded="rounded-none" glyphClassName="text-4xl" />
                 </div>
                 <div className="p-2.5">
                   <p className="truncate text-sm font-semibold">{p.name}</p>
@@ -155,10 +156,10 @@ export default async function HomePage() {
               <Link
                 key={c.category}
                 href={`/explore?category=${encodeURIComponent(c.category)}`}
-                className="flex w-16 shrink-0 flex-col items-center gap-1.5 text-center"
+                className="group flex w-[4.75rem] shrink-0 flex-col items-center gap-1.5 text-center"
               >
-                <span className="h-14 w-14 overflow-hidden rounded-full">
-                  <FoodThumb label={c.category} rounded="rounded-full" glyphClassName="text-2xl" />
+                <span className="h-16 w-16 overflow-hidden rounded-2xl border border-primary/10 bg-surface p-1 shadow-sm transition duration-300 group-hover:-translate-y-1 group-hover:shadow-md">
+                  <FoodThumb label={c.category} rounded="rounded-xl" glyphClassName="text-2xl" />
                 </span>
                 <span className="line-clamp-2 text-[11px] font-medium leading-tight">{c.category}</span>
               </Link>
@@ -177,9 +178,9 @@ export default async function HomePage() {
         {featured.length === 0 ? (
           <EmptyShops />
         ) : (
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-2 sm:gap-4 lg:grid-cols-4">
             {featured.map((shop) => (
-              <ShopCard key={shop.id} shop={shop} />
+              <ShopCard key={shop.id} shop={shop} preferCuratedArtwork />
             ))}
           </div>
         )}
@@ -188,9 +189,9 @@ export default async function HomePage() {
       {newShops.length > 0 && (
         <section className="mb-6">
           <h2 className="mb-3 text-base font-bold sm:text-lg">New on the marketplace</h2>
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-2 sm:gap-4 lg:grid-cols-4">
             {newShops.map((shop) => (
-              <ShopCard key={shop.id} shop={shop} />
+              <ShopCard key={shop.id} shop={shop} preferCuratedArtwork />
             ))}
           </div>
         </section>

@@ -74,7 +74,7 @@ export function CustomerChrome({ children }: { children: React.ReactNode }) {
               <Link
                 href="/scan"
                 aria-label="Scan QR code"
-                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground"
+                className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-primary text-primary-foreground shadow-[0_8px_18px_rgba(18,74,49,0.22)] transition-transform active:scale-95"
               >
                 <QrCode size={18} />
               </Link>
@@ -101,7 +101,7 @@ export function CustomerChrome({ children }: { children: React.ReactNode }) {
 
       {children}
 
-      <nav className="fixed inset-x-0 bottom-0 z-30 flex border-t border-border bg-surface pb-[env(safe-area-inset-bottom)] sm:hidden">
+      <nav className="fixed inset-x-3 bottom-3 z-30 flex rounded-2xl border border-primary/10 bg-surface/95 px-1.5 pb-[env(safe-area-inset-bottom)] shadow-[0_12px_32px_rgba(18,74,49,0.16)] backdrop-blur sm:hidden">
         {MOBILE_NAV.map(({ href, label, icon: Icon }) => {
           const active = href === "/" ? pathname === "/" : pathname.startsWith(href);
           return (
@@ -110,11 +110,11 @@ export function CustomerChrome({ children }: { children: React.ReactNode }) {
               href={href}
               aria-current={active ? "page" : undefined}
               className={cn(
-                "flex flex-1 flex-col items-center gap-1 py-2.5 text-[10px] font-medium",
-                active ? "text-primary" : "text-muted-foreground"
+                "relative flex flex-1 flex-col items-center gap-1 rounded-xl py-2.5 text-[10px] font-medium transition-all duration-200 active:scale-95",
+                active ? "bg-primary text-primary-foreground shadow-sm" : "text-muted-foreground hover:text-primary"
               )}
             >
-              <Icon size={21} className={cn(active && "fill-primary/15")} />
+              <Icon size={20} strokeWidth={active ? 2.3 : 1.9} className={cn(active && "fill-primary-foreground/15")} />
               {label}
             </Link>
           );
