@@ -5,6 +5,7 @@ import { getSession, isAdminRole, isStaffRole } from "@/lib/auth";
 import { generateQrSchema } from "@/lib/validation/schemas";
 import { generateQrToken, qrPublicUrl } from "@/lib/qr/token";
 import { defaultTemplateId } from "@/lib/qr/templates/registry";
+import { FEATURES } from "@/lib/constants";
 
 // Staff (their own shop) or admin (any shop / platform-level types): list QR codes with
 // a ready-to-render PNG data URL and basic scan stats (spec Section 4's QR Management
@@ -21,7 +22,10 @@ export async function GET(req: NextRequest) {
   }
 
   const qrCodes = await prisma.qRCode.findMany({
-    where: shopId ? { shopId } : isAdminRole(session.role) ? {} : { shopId: { in: session.shopIds } },
+    where: {
+      ...(shopId ? { shopId } : isAdminRole(session.role) ? {} : { shopId: { in: session.shopIds } }),
+      ...(!isAdminRole(session.role) && !FEATURES.delivery ? { type: { not: "DELIVERY" } } : {}),
+    },
     include: { table: true, product: true, location: true, promotion: true },
     orderBy: { createdAt: "desc" },
   });
@@ -50,6 +54,9 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Invalid QR request" }, { status: 400 });
   }
   const data = parsed.data;
+  if (data.type === "DELIVERY" && !FEATURES.delivery && !isAdminRole(session.role)) {
+    return NextResponse.json({ error: "This QR option is not available yet." }, { status: 400 });
+  }
 
   if (data.shopId && !isAdminRole(session.role) && !session.shopIds.includes(data.shopId)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 403 });

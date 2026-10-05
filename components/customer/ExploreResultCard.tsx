@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
 import { formatMoney } from "@/lib/utils";
 import { formatDistance } from "@/lib/location/distance";
+import { isOrderTypeActive } from "@/lib/constants";
 
 export interface Recommendation {
   product: {
@@ -44,7 +45,7 @@ export function ExploreResultCard({
 }) {
   const { product, shop, whyPicked } = recommendation;
   const price = product.discountPrice ?? product.price;
-  const modes = [shop.supportsDelivery && "Delivery", shop.supportsPickup && "Pickup", shop.supportsDineIn && "Dine-in"].filter(
+  const modes = [shop.supportsDelivery && isOrderTypeActive("DELIVERY") && "Delivery", shop.supportsPickup && "Pickup", shop.supportsDineIn && "Dine-in"].filter(
     Boolean
   );
 

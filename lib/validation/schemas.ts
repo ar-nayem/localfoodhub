@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { isOrderTypeActive } from "../constants";
 
 export const loginSchema = z.object({
   email: z.string().email(),
@@ -36,7 +37,7 @@ const cartLineSchema = z.object({
 export const createOrderSchema = z.object({
   idempotencyKey: z.string().uuid(),
   shopId: z.string().min(1),
-  orderType: z.enum(["DELIVERY", "PICKUP", "DINE_IN"]),
+  orderType: z.enum(["DELIVERY", "PICKUP", "DINE_IN"]).refine(isOrderTypeActive, "This order option is not available yet."),
   items: z.array(cartLineSchema).min(1),
   // Dine-in: table is NEVER trusted from the client directly — a `tableQrToken` is
   // required and re-resolved server-side (see lib/qr/resolve.ts resolveTableFromToken).

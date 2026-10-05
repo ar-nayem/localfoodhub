@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getSession, hashPassword } from "@/lib/auth";
 import { randomBytes } from "crypto";
+import { FEATURES } from "@/lib/constants";
 
 export async function GET(req: NextRequest) {
   const shopId = req.nextUrl.searchParams.get("shopId");
@@ -10,7 +11,7 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
   const staff = await prisma.shopStaff.findMany({
-    where: { shopId },
+    where: { shopId, ...(!FEATURES.delivery ? { role: { not: "DELIVERY_STAFF" } } : {}) },
     include: { user: { select: { name: true, email: true } } },
   });
   return NextResponse.json(staff);

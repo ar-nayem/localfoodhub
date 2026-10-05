@@ -2,6 +2,7 @@
 
 import { useEffect } from "react";
 import { useCartStore, CART_STORAGE_KEY, LEGACY_CART_STORAGE_KEYS } from "@/lib/cart/store";
+import { isOrderTypeActive } from "@/lib/constants";
 
 /** Triggers the cart store's deferred localStorage rehydration exactly once, after
  * mount — pairs with `skipHydration: true` in lib/cart/store.ts. Mount this once near
@@ -24,6 +25,10 @@ export function CartHydrator() {
     }
 
     useCartStore.persist.rehydrate();
+    const cart = useCartStore.getState();
+    if (cart.orderMode === "DELIVERY" && !isOrderTypeActive("DELIVERY")) {
+      cart.setOrderContext({ orderMode: "PICKUP" });
+    }
   }, []);
   return null;
 }

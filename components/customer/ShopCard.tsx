@@ -4,6 +4,7 @@ import { Badge } from "@/components/ui/Badge";
 import { FavoriteHeart } from "./FavoriteHeart";
 import { formatMoney } from "@/lib/utils";
 import { foodImageSource } from "@/lib/customer/foodArtwork";
+import { isOrderTypeActive } from "@/lib/constants";
 
 export interface ShopCardData {
   id: string;
@@ -26,7 +27,7 @@ export interface ShopCardData {
 export function ShopCard({ shop, preferCuratedArtwork = false }: { shop: ShopCardData; preferCuratedArtwork?: boolean }) {
   const cover = foodImageSource(shop.coverUrl, shop.category);
   const modes = [
-    shop.supportsDelivery && "Delivery",
+    shop.supportsDelivery && isOrderTypeActive("DELIVERY") && "Delivery",
     shop.supportsPickup && "Pickup",
     shop.supportsDineIn && "Dine-in",
   ].filter(Boolean);
@@ -79,7 +80,7 @@ export function ShopCard({ shop, preferCuratedArtwork = false }: { shop: ShopCar
           <span className="flex items-center gap-1">
             <Clock size={13} /> {shop.prepTimeMinutes}-{shop.prepTimeMinutes + 10} min
           </span>
-          {shop.deliveryFee > 0 && <span>{formatMoney(shop.deliveryFee)} delivery</span>}
+          {isOrderTypeActive("DELIVERY") && shop.supportsDelivery && shop.deliveryFee > 0 && <span>{formatMoney(shop.deliveryFee)} delivery</span>}
         </div>
         <div className="mt-2 flex flex-wrap gap-1.5">
           {modes.map((m) => (
