@@ -57,10 +57,10 @@ export default function CartPage() {
   if (items.length === 0) {
     return (
       <main className="mx-auto flex min-h-[70vh] max-w-md flex-col items-center justify-center px-6 text-center">
-        <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-muted">
-          <ShoppingBag size={26} className="text-muted-foreground" />
+        <div className="mb-5 flex h-24 w-24 items-center justify-center rounded-3xl bg-primary/10 shadow-sm">
+          <ShoppingBag size={36} className="text-primary" />
         </div>
-        <h1 className="text-lg font-semibold">Your cart is empty</h1>
+        <h1 className="text-2xl font-bold tracking-tight">Something delicious awaits</h1>
         <p className="mt-1 text-sm text-muted-foreground">Find something delicious nearby.</p>
         <Link href="/explore">
           <Button className="mt-5">Explore shops</Button>
@@ -73,7 +73,7 @@ export default function CartPage() {
     <main className="mx-auto max-w-lg px-4 pb-40 pt-4">
       <div className="mb-4 flex items-center gap-3">
         <BackButton fallback="/explore" />
-        <h1 className="text-xl font-bold">Your Cart</h1>
+        <div><p className="text-[10px] font-bold uppercase tracking-[0.16em] text-primary">Almost at the table</p><h1 className="text-2xl font-bold tracking-tight">Your cart</h1></div>
       </div>
       <p className="-mt-2 mb-4 text-sm text-muted-foreground">
         {shopName}
@@ -84,9 +84,9 @@ export default function CartPage() {
         {items.map((item) => (
           <div
             key={item.key}
-            className="flex items-center gap-3 rounded-2xl border border-border bg-surface p-3"
+            className="flex items-center gap-3 rounded-2xl border border-primary/10 bg-surface p-4 shadow-sm"
           >
-            <div className="h-14 w-14 shrink-0 overflow-hidden rounded-xl">
+            <div className="h-20 w-20 shrink-0 overflow-hidden rounded-2xl">
               <FoodThumb src={item.imageUrl} label={item.name} rounded="rounded-xl" glyphClassName="text-xl" />
             </div>
             <div className="min-w-0 flex-1">

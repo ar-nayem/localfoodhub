@@ -28,11 +28,11 @@ export function AdminChrome({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <div className="flex min-h-screen">
-      <aside className="hidden w-60 shrink-0 flex-col border-r border-border bg-secondary text-secondary-foreground sm:flex">
+    <div className="operations-experience admin-experience flex min-h-screen">
+      <aside className="sticky top-0 hidden h-screen w-64 shrink-0 flex-col overflow-y-auto border-r border-border bg-secondary text-secondary-foreground sm:flex">
         <div className="border-b border-white/10 p-4">
           <Logo />
-          <span className="mt-1 block text-xs text-white/60">Admin</span>
+          <span className="mt-2 block text-xs font-semibold uppercase tracking-widest text-white/60">Company workspace</span>
         </div>
         <nav className="flex-1 space-y-1 p-3">
           {NAV.map(({ href, label, icon: Icon }) => {
@@ -42,8 +42,8 @@ export function AdminChrome({ children }: { children: React.ReactNode }) {
                 key={href}
                 href={href}
                 className={cn(
-                  "flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm font-medium",
-                  active ? "bg-white/10 text-white" : "text-white/70 hover:bg-white/5"
+                  "flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-medium transition duration-200",
+                  active ? "bg-white text-secondary shadow-sm" : "text-white/70 hover:bg-white/10 hover:text-white"
                 )}
               >
                 <Icon size={17} />
@@ -66,21 +66,21 @@ export function AdminChrome({ children }: { children: React.ReactNode }) {
             Log out
           </button>
         </header>
-        <nav className="flex gap-1 overflow-x-auto border-b border-border bg-surface px-2 sm:hidden">
-          {NAV.map(({ href, label }) => (
+        <nav className="sticky top-0 z-20 flex gap-2 overflow-x-auto border-b border-border bg-surface/95 px-3 py-2 backdrop-blur sm:hidden">
+          {NAV.map(({ href, label, icon: Icon }) => (
             <Link
               key={href}
               href={href}
               className={cn(
-                "whitespace-nowrap border-b-2 px-3 py-2.5 text-xs font-medium",
-                pathname === href ? "border-primary text-primary" : "border-transparent text-muted-foreground"
+                "flex items-center gap-2 whitespace-nowrap rounded-xl px-3 py-2.5 text-xs font-semibold transition-colors",
+                pathname === href ? "bg-secondary text-white" : "bg-muted/60 text-muted-foreground"
               )}
             >
-              {label}
+              <Icon size={15} /> {label}
             </Link>
           ))}
         </nav>
-        <main className="mx-auto max-w-5xl p-4 sm:p-6">{children}</main>
+        <main className="mx-auto max-w-6xl p-4 sm:p-8">{children}</main>
       </div>
     </div>
   );

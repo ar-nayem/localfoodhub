@@ -1,5 +1,5 @@
 import { cn } from "@/lib/utils";
-import { artworkForFood } from "@/lib/customer/foodArtwork";
+import { artworkForFood, foodImageSource } from "@/lib/customer/foodArtwork";
 import { UtensilsCrossed } from "lucide-react";
 
 export function FoodThumb({
@@ -18,7 +18,7 @@ export function FoodThumb({
   preferArtwork?: boolean;
 }) {
   const artwork = artworkForFood(label);
-  const displaySrc = preferArtwork && artwork ? artwork : src ?? artwork;
+  const displaySrc = preferArtwork && artwork ? artwork : foodImageSource(src, label);
 
   if (displaySrc) {
     return (

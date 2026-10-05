@@ -51,3 +51,69 @@ body {
   outline-offset: 2px;
   border-radius: 6px;
 }
+
+/* Shared surface language for customer journeys and company workspaces. */
+.customer-experience main > h1,
+.operations-experience main h1 {
+  letter-spacing: -0.035em;
+  line-height: 1.2;
+}
+.customer-experience main > section.bg-surface,
+.customer-experience main .border.bg-surface {
+  border-color: hsl(var(--primary) / 0.12);
+  box-shadow: 0 6px 22px hsl(var(--primary) / 0.055);
+}
+.customer-experience main input,
+.customer-experience main textarea {
+  transition: border-color 180ms ease, box-shadow 180ms ease;
+}
+.customer-experience main input:focus,
+.customer-experience main textarea:focus {
+  border-color: hsl(var(--primary) / 0.5);
+}
+.operations-experience {
+  --background: 150 14% 96%;
+  --border: 150 14% 88%;
+  --radius: 14px;
+  background: hsl(var(--background));
+}
+.operations-experience main .border.bg-surface {
+  box-shadow: 0 4px 16px hsl(var(--secondary) / 0.04);
+}
+.operations-experience main h1 {
+  font-size: 1.65rem;
+}
+.operations-experience main table {
+  border-collapse: separate;
+  border-spacing: 0;
+}
+.operations-experience main thead {
+  background: hsl(var(--muted));
+  color: hsl(var(--muted-foreground));
+}
+.operations-experience main th {
+  padding-top: 0.9rem;
+  padding-bottom: 0.9rem;
+  font-size: 0.75rem;
+  letter-spacing: 0.025em;
+}
+.operations-experience main tbody tr:hover {
+  background: hsl(var(--primary) / 0.035);
+}
+@media (prefers-reduced-motion: no-preference) {
+  .customer-experience main,
+  .operations-experience main {
+    animation: experience-enter 220ms ease-out;
+  }
+}
+@keyframes experience-enter {
+  from { opacity: 0.6; transform: translateY(5px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .customer-experience *,
+  .operations-experience * {
+    animation: none !important;
+    transition-duration: 0.01ms !important;
+  }
+}

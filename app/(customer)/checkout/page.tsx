@@ -25,6 +25,7 @@ import { formatMoney, cn } from "@/lib/utils";
 import { toast } from "@/components/ui/Toast";
 import type { SavedAddress } from "@/components/shared/AddressMapPicker";
 import { checkoutJourneyFor } from "@/lib/customer/checkoutPresentation";
+import { FoodThumb } from "@/components/customer/FoodThumb";
 
 export default function CheckoutPage() {
   const router = useRouter();
@@ -205,7 +206,8 @@ export default function CheckoutPage() {
         <BackButton fallback="/cart" />
         <div>
           <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-primary">শখের খাবার</p>
-          <h1 className="text-xl font-bold">Checkout</h1>
+          <h1 className="text-2xl font-bold tracking-tight">Make it yours</h1>
+          <p className="mt-1 text-xs text-muted-foreground">Review your order and choose your handoff.</p>
         </div>
       </div>
 
@@ -220,11 +222,7 @@ export default function CheckoutPage() {
         <div className="mt-4 space-y-3">
           {cart.items.map((item) => (
             <div key={item.key} className="flex items-center gap-3">
-              {item.imageUrl ? (
-                <img src={item.imageUrl} alt="" className="h-14 w-14 rounded-2xl object-cover" />
-              ) : (
-                <span className="flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/10 text-primary"><UtensilsCrossed size={22} /></span>
-              )}
+              <span className="h-16 w-16 shrink-0 overflow-hidden rounded-2xl"><FoodThumb src={item.imageUrl} label={item.name} /></span>
               <div className="min-w-0 flex-1">
                 <p className="truncate text-sm font-semibold">{item.name}</p>
                 <p className="text-xs text-muted-foreground">Qty {item.quantity}</p>

@@ -83,7 +83,7 @@ export function ShopHeader({
 
   return (
     <div>
-      <div className="relative aspect-[16/9] w-full sm:aspect-[16/6] sm:rounded-b-3xl sm:overflow-hidden">
+      <div className="relative aspect-[16/8] w-full overflow-hidden rounded-b-3xl sm:aspect-[16/5]">
         <FoodThumb
           src={shop.coverUrl}
           label={shop.category}
@@ -116,7 +116,7 @@ export function ShopHeader({
 
       <div className="relative px-4 sm:px-6">
         {/* Shop identity card, lifted over the cover like the reference layout. */}
-        <div className="-mt-8 rounded-2xl border border-border bg-surface p-4 shadow-sm">
+        <div className="-mt-8 rounded-3xl border border-primary/10 bg-surface p-5 shadow-[0_12px_30px_rgba(18,74,49,0.10)]">
           <div className="flex items-start gap-3">
             <span className="h-14 w-14 shrink-0 overflow-hidden rounded-2xl border border-border">
               <FoodThumb
@@ -152,7 +152,7 @@ export function ShopHeader({
           </div>
 
           {modes.length > 0 && (
-            <div className="mt-4 grid grid-cols-3 divide-x divide-border border-t border-border pt-3">
+            <div className="mt-4 grid divide-x divide-border border-t border-border pt-3" style={{ gridTemplateColumns: `repeat(${modes.length}, minmax(0, 1fr))` }}>
               {modes.map(({ icon: Icon, label, detail }) => (
                 <div key={label} className="flex flex-col items-center gap-1 px-1 text-center">
                   <Icon size={17} className="text-primary" />

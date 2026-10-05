@@ -28,11 +28,11 @@ export function FoodCard({
       onClick={() => !unavailable && onSelect(product)}
       disabled={unavailable}
       className={cn(
-        "flex w-full items-center gap-3 rounded-xl border border-border bg-surface p-3 text-left shadow-sm transition-transform active:scale-[0.99]",
+        "flex w-full items-center gap-3 rounded-2xl border border-primary/10 bg-surface p-3 text-left shadow-sm transition duration-200 hover:-translate-y-0.5 hover:border-primary/25 hover:shadow-md active:scale-[0.99]",
         unavailable && "opacity-50"
       )}
     >
-      <div className="h-[4.5rem] w-[4.5rem] shrink-0 overflow-hidden rounded-xl">
+      <div className="h-20 w-20 shrink-0 overflow-hidden rounded-xl">
         <FoodThumb src={product.imageUrl} label={product.name} rounded="rounded-xl" glyphClassName="text-2xl" />
       </div>
       <div className="min-w-0 flex-1">

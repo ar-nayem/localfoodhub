@@ -29,7 +29,7 @@ export function CustomerChrome({ children }: { children: React.ReactNode }) {
   const showMobileHeader = !MOBILE_BARE_HEADER.some((p) => pathname.startsWith(p));
 
   return (
-    <div className="min-h-screen pb-20 sm:pb-0">
+    <div className="customer-experience min-h-screen pb-24 sm:pb-0">
       {/* Desktop header */}
       <header className="sticky top-0 z-30 hidden border-b border-border bg-surface/95 backdrop-blur sm:block">
         <div className="mx-auto flex max-w-6xl items-center gap-6 px-6 py-3">

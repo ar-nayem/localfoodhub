@@ -131,7 +131,10 @@ function ExploreContent() {
   return (
     <main className="mx-auto max-w-6xl px-4 pb-10 pt-6 sm:px-6">
       <div className="mb-4 flex items-center justify-between gap-3">
-        <h1 className="text-xl font-bold">Discover food around you</h1>
+        <div>
+          <p className="mb-1 text-[10px] font-bold uppercase tracking-[0.16em] text-primary">Find your next favorite</p>
+          <h1 className="text-xl font-bold tracking-tight sm:text-3xl">Discover local kitchens</h1>
+        </div>
         <div className="flex shrink-0 rounded-full border border-border p-0.5">
           <button
             onClick={() => setView("list")}
@@ -210,7 +213,7 @@ function ExploreContent() {
       )}
 
       {!shops ? (
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-3">
           {Array.from({ length: 6 }).map((_, i) => (
             <Skeleton key={i} className="h-64 w-full" />
           ))}
@@ -220,7 +223,7 @@ function ExploreContent() {
           No food shops match your filters.
         </div>
       ) : view === "list" ? (
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-3">
           {shops.map((shop) => (
             <div key={shop.slug} className="relative">
               <ShopCard shop={shop} />

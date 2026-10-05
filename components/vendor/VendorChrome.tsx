@@ -52,8 +52,8 @@ export function VendorChrome({ children, role }: { children: React.ReactNode; ro
   }
 
   return (
-    <div className="flex min-h-screen">
-      <aside className="hidden w-60 shrink-0 flex-col border-r border-border bg-surface sm:flex">
+    <div className="operations-experience vendor-experience flex min-h-screen">
+      <aside className="sticky top-0 hidden h-screen w-64 shrink-0 flex-col overflow-y-auto border-r border-border bg-surface sm:flex">
         <div className="border-b border-border p-4">
           <Logo />
           <span className="mt-1 block text-xs text-muted-foreground">Business dashboard</span>
@@ -66,8 +66,8 @@ export function VendorChrome({ children, role }: { children: React.ReactNode; ro
                 key={href}
                 href={href}
                 className={cn(
-                  "flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm font-medium",
-                  active ? "bg-primary/10 text-primary" : "text-muted-foreground hover:bg-muted"
+                  "flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-medium transition duration-200",
+                  active ? "bg-primary text-white shadow-sm" : "text-muted-foreground hover:bg-muted hover:text-foreground"
                 )}
               >
                 <Icon size={17} />
@@ -95,21 +95,21 @@ export function VendorChrome({ children, role }: { children: React.ReactNode; ro
             Log out
           </button>
         </header>
-        <nav className="flex gap-1 overflow-x-auto border-b border-border bg-surface px-2 sm:hidden">
-          {mobileNav.map(({ href, label }) => (
+        <nav className="sticky top-0 z-20 flex gap-2 overflow-x-auto border-b border-border bg-surface/95 px-3 py-2 backdrop-blur sm:hidden">
+          {mobileNav.map(({ href, label, icon: Icon }) => (
             <Link
               key={href}
               href={href}
               className={cn(
-                "whitespace-nowrap border-b-2 px-3 py-2.5 text-xs font-medium",
-                pathname === href ? "border-primary text-primary" : "border-transparent text-muted-foreground"
+                "flex items-center gap-2 whitespace-nowrap rounded-xl px-3 py-2.5 text-xs font-semibold transition-colors",
+                pathname === href ? "bg-primary text-white" : "bg-muted/60 text-muted-foreground"
               )}
             >
-              {label}
+              <Icon size={15} /> {label}
             </Link>
           ))}
         </nav>
-        <main className="mx-auto max-w-5xl p-4 pb-32 sm:p-6 sm:pb-6">{children}</main>
+        <main className="mx-auto max-w-6xl p-4 pb-32 sm:p-8 sm:pb-8">{children}</main>
       </div>
 
       {/* Sits well clear of the true screen edge, not flush against it — Android Chrome's

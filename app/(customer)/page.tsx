@@ -126,7 +126,7 @@ export default async function HomePage() {
                 className="w-[10.25rem] shrink-0 overflow-hidden rounded-[1.35rem] border border-primary/10 bg-surface shadow-[0_6px_18px_rgba(18,74,49,0.08)] transition duration-300 hover:-translate-y-1 hover:shadow-[0_13px_25px_rgba(18,74,49,0.16)] sm:w-auto"
               >
                 <div className="aspect-[4/3] w-full">
-                  <FoodThumb src={p.imageUrl} label={p.name} preferArtwork rounded="rounded-none" glyphClassName="text-4xl" />
+                  <FoodThumb src={p.imageUrl} label={p.name} rounded="rounded-none" glyphClassName="text-4xl" />
                 </div>
                 <div className="p-2.5">
                   <p className="truncate text-sm font-semibold">{p.name}</p>
@@ -180,7 +180,7 @@ export default async function HomePage() {
         ) : (
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-2 sm:gap-4 lg:grid-cols-4">
             {featured.map((shop) => (
-              <ShopCard key={shop.id} shop={shop} preferCuratedArtwork />
+              <ShopCard key={shop.id} shop={shop} />
             ))}
           </div>
         )}
@@ -191,7 +191,7 @@ export default async function HomePage() {
           <h2 className="mb-3 text-base font-bold sm:text-lg">New on the marketplace</h2>
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-2 sm:gap-4 lg:grid-cols-4">
             {newShops.map((shop) => (
-              <ShopCard key={shop.id} shop={shop} preferCuratedArtwork />
+              <ShopCard key={shop.id} shop={shop} />
             ))}
           </div>
         </section>
